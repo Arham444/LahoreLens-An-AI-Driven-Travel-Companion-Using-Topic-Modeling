@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 # ====== CONFIGURATION ======
-API_KEY = "AIzaSyABHqJQJcaJTmijvCaEHvcUH-H0-t_0y9U"
+API_KEY = "YoutubeAPIKey"
 
 # 2. PASTE THE VIDEO ID HERE (e.g., "rJXhbhtmHjE")
 VIDEO_ID = ""
@@ -24,8 +24,7 @@ LAHORE_ENTITIES = [
     "gulberg",
     "johar town",
     "wapda town",
-    "model town"
-    "cantt",
+    "model towncantt",
     "garden town",
     "satellite town",
     "township",
