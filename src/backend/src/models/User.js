@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     searchHistory: [{
         type: String,
     }],
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Place'
+    }],
 }, {
     timestamps: true,
 });
