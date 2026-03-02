@@ -4,6 +4,7 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { WeatherWidget } from "../components/WeatherWidget";
 
 interface LandingPageProps {
   onNavigate: (page: string) => void;
@@ -66,13 +67,13 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>
-        
+
         <div className="relative z-10 container mx-auto px-4 md:px-6 text-center text-white">
           <h1 className="text-white mb-4">Discover the Heart of Lahore</h1>
           <p className="text-white/90 mb-8 max-w-2xl mx-auto">
             Your AI-powered companion for exploring food, culture, weather, and events in Lahore
           </p>
-          
+
           <div className="max-w-2xl mx-auto">
             <div className="flex gap-2 bg-white rounded-lg p-2">
               <div className="flex-1 flex items-center gap-2 px-3">
@@ -114,30 +115,8 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Weather Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl mx-auto">
-            <Card>
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div>
-                    <h3 className="mb-2">Today's Weather in Lahore</h3>
-                    <p className="text-muted-foreground">Sunday, October 12, 2025</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Cloud className="h-16 w-16 text-primary" />
-                    <div>
-                      <div className="text-5xl">28°C</div>
-                      <p className="text-muted-foreground">Partly Cloudy</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+      {/* Weather Section API Integration */}
+      <WeatherWidget />
 
       {/* Top Places */}
       <section className="py-16 bg-background">
@@ -148,7 +127,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
               View All <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {topPlaces.map((place) => (
               <Card key={place.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
