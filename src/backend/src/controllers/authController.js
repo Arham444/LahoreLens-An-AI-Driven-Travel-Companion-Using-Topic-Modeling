@@ -1,76 +1,49 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const admin = require('../config/firebase');
 const User = require('../models/User');
 
-// Generate JWT
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '30d',
-    });
-};
-
-// @desc    Register new user
-// @route   POST /api/auth/signup
+// @desc    Register or Login a user via Firebase
+// @route   POST /api/auth/sync
 // @access  Public
-const registerUser = async (req, res) => {
-    const { username, email, password } = req.body;
+const syncUser = async (req, res) => {
+    const { token } = req.body;
 
-    if (!username || !email || !password) {
-        return res.status(400).json({ message: 'Please add all fields' });
+    if (!token) {
+        return res.status(400).json({ message: 'No token provided' });
     }
 
-    // Check if user exists
-    const userExists = await User.findOne({ email });
+    try {
+        // 1. Verify the Firebase token
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const { uid, email, name } = decodedToken;
 
-    if (userExists) {
-        return res.status(400).json({ message: 'User already exists' });
-    }
+        // 2. Check if user already exists in our MongoDB
+        let user = await User.findOne({ email });
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+        if (!user) {
+            // 3. If new user, create them in MongoDB
+            user = await User.create({
+                username: name || email.split('@')[0], // Fallback username if none provided
+                email: email,
+                password: uid, // We no longer need local passwords, use UID as placeholder or remove password requirement from model
+            });
+            console.log("New user registered via Firebase:", email);
+        } else {
+            console.log("Existing user logged in via Firebase:", email);
+        }
 
-    // Create user
-    const user = await User.create({
-        username,
-        email,
-        password: hashedPassword,
-    });
-
-    if (user) {
-        res.status(201).json({
+        // 4. Return user data (The frontend will use the Firebase token for future requests, not a local JWT)
+        res.status(200).json({
             _id: user.id,
             username: user.username,
             email: user.email,
-            token: generateToken(user.id),
         });
-    } else {
-        res.status(400).json({ message: 'Invalid user data' });
-    }
-};
 
-// @desc    Authenticate a user
-// @route   POST /api/auth/login
-// @access  Public
-const loginUser = async (req, res) => {
-    const { email, password } = req.body;
-
-    // Check for user email
-    const user = await User.findOne({ email });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-        res.json({
-            _id: user.id,
-            username: user.username,
-            email: user.email,
-            token: generateToken(user.id),
-        });
-    } else {
-        res.status(400).json({ message: 'Invalid credentials' });
+    } catch (error) {
+        console.error("Firebase Auth Error:", error.message);
+        res.status(401).json({ message: 'Invalid or expired token' });
     }
 };
 
 module.exports = {
-    registerUser,
-    loginUser,
+    syncUser,
 };
