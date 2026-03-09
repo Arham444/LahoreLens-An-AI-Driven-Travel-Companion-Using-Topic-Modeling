@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AuthProvider } from "./context/AuthContext";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { Chatbot } from "./components/Chatbot";
@@ -12,15 +13,15 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
-type Page = 
-  | "home" 
-  | "login" 
-  | "dashboard" 
-  | "explore" 
-  | "favorites" 
-  | "profile" 
-  | "notifications" 
-  | "settings" 
+type Page =
+  | "home"
+  | "login"
+  | "dashboard"
+  | "explore"
+  | "favorites"
+  | "profile"
+  | "notifications"
+  | "settings"
   | "404";
 
 export default function App() {
@@ -31,7 +32,7 @@ export default function App() {
     if (page === "dashboard" || page === "login") {
       setIsLoggedIn(true);
     }
-    
+
     if (page === "home" && currentPage === "login") {
       setIsLoggedIn(false);
     }
@@ -68,22 +69,24 @@ export default function App() {
   const showNavAndFooter = currentPage !== "login";
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {showNavAndFooter && (
-        <Navbar 
-          currentPage={currentPage} 
-          onNavigate={handleNavigate}
-          isLoggedIn={isLoggedIn}
-        />
-      )}
-      
-      <main className="flex-1">
-        {renderPage()}
-      </main>
-      
-      {showNavAndFooter && <Footer onNavigate={handleNavigate} />}
-      
-      {isLoggedIn && <Chatbot />}
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen flex flex-col">
+        {showNavAndFooter && (
+          <Navbar
+            currentPage={currentPage}
+            onNavigate={handleNavigate}
+            isLoggedIn={isLoggedIn}
+          />
+        )}
+
+        <main className="flex-1">
+          {renderPage()}
+        </main>
+
+        {showNavAndFooter && <Footer onNavigate={handleNavigate} />}
+
+        {isLoggedIn && <Chatbot />}
+      </div>
+    </AuthProvider>
   );
 }
