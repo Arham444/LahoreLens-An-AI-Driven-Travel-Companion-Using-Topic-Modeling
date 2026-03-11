@@ -59,12 +59,12 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen w-full grid lg:grid-cols-2 bg-white dark:bg-zinc-950">
+    <div className="min-h-screen w-full grid lg:grid-cols-2 bg-white">
       {/* Left Pane - Premium Imagery */}
       <div 
         className="flex max-lg:hidden flex-col justify-center items-center relative w-full h-full overflow-hidden bg-cover bg-center"
         style={{ 
-          backgroundImage: 'url("https://images.unsplash.com/photo-1586015555651-409a2baf45a0?q=80&w=2574&auto=format&fit=crop")',
+          backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Badshahi_Mosque_and_Minar-e-Pakistan.jpg/2560px-Badshahi_Mosque_and_Minar-e-Pakistan.jpg")',
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-blue-900/90 mix-blend-multiply transition-opacity duration-1000" />
@@ -88,9 +88,9 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       </div>
 
       {/* Right Pane - Auth Form */}
-      <div className="flex flex-col justify-center items-center w-full p-6 sm:p-12 relative bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex flex-col justify-center items-center w-full p-6 sm:p-12 relative bg-zinc-50">
         <div className="absolute top-4 right-4 sm:top-8 sm:right-8">
-          <Button variant="ghost" onClick={() => onNavigate("home")} className="text-muted-foreground hover:text-primary">
+          <Button variant="ghost" onClick={() => onNavigate("home")} className="text-zinc-500 hover:text-primary hover:bg-zinc-100">
             Back to Home
           </Button>
         </div>
@@ -103,11 +103,11 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
           </div>
 
           <div className="mb-8 text-center lg:text-left">
-            <h2 className="text-3xl font-bold tracking-tight mb-2 text-foreground">Welcome to the journey</h2>
-            <p className="text-muted-foreground">Sign in to your account and continue exploring.</p>
+            <h2 className="text-3xl font-bold tracking-tight mb-2 text-zinc-900">Welcome to the journey</h2>
+            <p className="text-zinc-500">Sign in to your account and continue exploring.</p>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 text-card-foreground rounded-2xl border shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+          <div className="bg-white text-zinc-900 rounded-2xl border border-zinc-200 shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
             <div className="px-6 py-6 sm:px-8 sm:py-8">
               {error && (
                 <div className="p-3 mb-6 text-sm text-red-600 bg-red-100 border border-red-200 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
@@ -116,16 +116,16 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
               )}
 
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50 rounded-xl mb-6">
-                  <TabsTrigger value="login" className="rounded-lg transition-all data-[state=active]:shadow-sm">Login</TabsTrigger>
-                  <TabsTrigger value="signup" className="rounded-lg transition-all data-[state=active]:shadow-sm">Sign Up</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 p-1 bg-zinc-100 rounded-xl mb-6">
+                  <TabsTrigger value="login" className="rounded-lg transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">Login</TabsTrigger>
+                  <TabsTrigger value="signup" className="rounded-lg transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">Sign Up</TabsTrigger>
                 </TabsList>
 
                 {/* LOGIN TAB */}
                 <TabsContent value="login" className="animate-in fade-in-50 duration-500">
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-sm font-semibold">Email address</Label>
+                      <Label htmlFor="email" className="text-sm font-semibold text-zinc-700">Email address</Label>
                       <Input
                         id="email"
                         type="email"
@@ -133,12 +133,12 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="h-11 bg-muted/30 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
+                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
+                        <Label htmlFor="password" className="text-sm font-semibold text-zinc-700">Password</Label>
                         <a href="#" className="text-xs text-primary hover:underline font-medium">Forgot password?</a>
                       </div>
                       <Input
@@ -148,7 +148,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="h-11 bg-muted/30 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
+                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
                       />
                     </div>
                     <Button type="submit" className="w-full h-11 mt-6 text-base font-semibold shadow-md active:scale-[0.98] transition-all" disabled={loading}>
@@ -161,7 +161,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                 <TabsContent value="signup" className="animate-in fade-in-50 duration-500">
                   <form onSubmit={handleSignup} className="space-y-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="signup-name" className="text-sm font-semibold">Full Name</Label>
+                      <Label htmlFor="signup-name" className="text-sm font-semibold text-zinc-700">Full Name</Label>
                       <Input
                         id="signup-name"
                         type="text"
@@ -169,11 +169,11 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
-                        className="h-11 bg-muted/30 focus-visible:ring-primary transition-all"
+                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary transition-all"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="signup-email" className="text-sm font-semibold">Email address</Label>
+                      <Label htmlFor="signup-email" className="text-sm font-semibold text-zinc-700">Email address</Label>
                       <Input
                         id="signup-email"
                         type="email"
@@ -181,11 +181,11 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="h-11 bg-muted/30 focus-visible:ring-primary transition-all"
+                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary transition-all"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="signup-password" className="text-sm font-semibold">Password <span className="text-xs text-muted-foreground font-normal">(Min 6 chars)</span></Label>
+                      <Label htmlFor="signup-password" className="text-sm font-semibold text-zinc-700">Password <span className="text-xs text-zinc-500 font-normal">(Min 6 chars)</span></Label>
                       <Input
                         id="signup-password"
                         type="password"
@@ -194,7 +194,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                         onChange={(e) => setPassword(e.target.value)}
                         minLength={6}
                         required
-                        className="h-11 bg-muted/30 focus-visible:ring-primary transition-all"
+                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary transition-all"
                       />
                     </div>
                     <Button type="submit" className="w-full h-11 mt-6 text-base font-semibold shadow-md active:scale-[0.98] transition-all" disabled={loading}>
@@ -206,7 +206,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
             </div>
           </div>
           
-          <p className="text-center text-sm text-muted-foreground mt-8">
+          <p className="text-center text-sm text-zinc-500 mt-8">
             By continuing, you agree to LahoreLens's <a href="#" className="underline hover:text-primary transition-colors">Terms of Service</a> and <a href="#" className="underline hover:text-primary transition-colors">Privacy Policy</a>.
           </p>
         </div>
