@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { useAuth } from "../context/AuthContext";
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -28,12 +29,14 @@ const cultureRecommendations = [
 ];
 
 export function Dashboard({ onNavigate }: DashboardProps) {
+  const { user } = useAuth();
+  
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="mb-2">Welcome back, Ahmed!</h1>
+          <h1 className="mb-2">Welcome back, {user?.username || "Guest"}!</h1>
           <p className="text-muted-foreground">
             Here are your personalized recommendations for exploring Lahore
           </p>

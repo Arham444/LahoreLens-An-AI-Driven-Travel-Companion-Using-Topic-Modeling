@@ -5,6 +5,7 @@ import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
+import { useAuth } from "../context/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,8 @@ interface ProfilePageProps {
 }
 
 export function ProfilePage({ onNavigate }: ProfilePageProps) {
+  const { user } = useAuth();
+  
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 md:px-6 py-8">
@@ -42,7 +45,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
                   <User className="h-12 w-12 text-primary-foreground" />
                 </div>
                 <div className="flex-1 text-center md:text-left">
-                  <h3 className="mb-1">Ahmed Khan</h3>
+                  <h3 className="mb-1">{user?.username || "Guest"}</h3>
                   <p className="text-muted-foreground mb-3">Member since March 2025</p>
                   <Button variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
@@ -62,14 +65,10 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" defaultValue="Ahmed" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" defaultValue="Khan" />
+                  <Label htmlFor="firstName">Username</Label>
+                  <Input id="firstName" defaultValue={user?.username || ""} />
                 </div>
               </div>
 
@@ -77,7 +76,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
                 <Label htmlFor="email">Email</Label>
                 <div className="flex gap-2">
                   <Mail className="h-5 w-5 text-muted-foreground mt-2" />
-                  <Input id="email" type="email" defaultValue="ahmed.khan@email.com" className="flex-1" />
+                  <Input id="email" type="email" defaultValue={user?.email || ""} className="flex-1" disabled />
                 </div>
               </div>
 
