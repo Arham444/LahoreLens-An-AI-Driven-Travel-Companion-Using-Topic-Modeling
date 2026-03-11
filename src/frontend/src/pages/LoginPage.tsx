@@ -8,6 +8,7 @@ import { MapPin } from "lucide-react";
 import { auth } from "../config/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import loginBg from "../assets/login-bg.png";
 
 interface LoginPageProps {
   onNavigate: (page: string) => void;
@@ -64,7 +65,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       <div 
         className="flex max-lg:hidden flex-col justify-center items-center relative w-full h-full overflow-hidden bg-cover bg-center"
         style={{ 
-          backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Badshahi_Mosque_and_Minar-e-Pakistan.jpg/2560px-Badshahi_Mosque_and_Minar-e-Pakistan.jpg")',
+          backgroundImage: `url(${loginBg})`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-blue-900/90 mix-blend-multiply transition-opacity duration-1000" />
