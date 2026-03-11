@@ -59,10 +59,10 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen flex w-full flex-col lg:flex-row bg-background">
+    <div className="min-h-screen w-full grid lg:grid-cols-2 bg-background">
       {/* Left Pane - Premium Imagery */}
       <div 
-        className="hidden lg:flex flex-col justify-center items-center w-1/2 relative overflow-hidden bg-cover bg-center"
+        className="hidden lg:flex flex-col justify-center items-center relative w-full h-full overflow-hidden bg-cover bg-center"
         style={{ 
           backgroundImage: 'url("https://images.unsplash.com/photo-1586015555651-409a2baf45a0?q=80&w=2574&auto=format&fit=crop")',
         }}
@@ -88,7 +88,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       </div>
 
       {/* Right Pane - Auth Form */}
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 p-6 sm:p-12 relative bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex flex-col justify-center items-center w-full p-6 sm:p-12 relative bg-background">
         <div className="absolute top-4 right-4 sm:top-8 sm:right-8">
           <Button variant="ghost" onClick={() => onNavigate("home")} className="text-muted-foreground hover:text-primary">
             Back to Home
