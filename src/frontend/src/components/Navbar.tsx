@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { auth } from "../config/firebase";
 
 interface NavbarProps {
   currentPage: string;
@@ -69,21 +70,33 @@ export function Navbar({ currentPage, onNavigate, isLoggedIn = false }: NavbarPr
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="focus-visible:ring-0">
                       <User className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onNavigate("profile")}>
+                  <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-zinc-950 z-50 shadow-lg border rounded-md p-1">
+                    <DropdownMenuItem 
+                      onClick={() => onNavigate("profile")}
+                      className="cursor-pointer flex items-center p-2 hover:bg-muted rounded-sm"
+                    >
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onNavigate("settings")}>
+                    <DropdownMenuItem 
+                      onClick={() => onNavigate("settings")}
+                      className="cursor-pointer flex items-center p-2 hover:bg-muted rounded-sm"
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onNavigate("home")}>
+                    <DropdownMenuSeparator className="my-1 border-t" />
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        auth.signOut();
+                        onNavigate("home");
+                      }}
+                      className="cursor-pointer flex items-center p-2 hover:bg-red-50 text-red-600 rounded-sm focus:text-red-600 focus:bg-red-50"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout
                     </DropdownMenuItem>
