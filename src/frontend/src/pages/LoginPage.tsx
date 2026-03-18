@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Input } from "../components/ui/input";
@@ -10,25 +13,45 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfi
 import { useNavigate } from "react-router-dom";
 import loginBg from "../assets/login-bg.png";
 
+// Validation Schemas
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters")
+});
+
+const signupSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters")
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
+
 interface LoginPageProps {
   onNavigate: (page: string) => void;
 }
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" }
+  });
+
+  const signupForm = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { name: "", email: "", password: "" }
+  });
+
+  const onLoginSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     setError("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // The AuthContext will automatically detect the login and sync with the backend
+      await signInWithEmailAndPassword(auth, data.email, data.password);
       onNavigate("dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to log in");
@@ -37,20 +60,13 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSignupSubmit = async (data: SignupFormValues) => {
     setLoading(true);
     setError("");
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Add the user's name to their Firebase profile
-      await updateProfile(userCredential.user, {
-        displayName: name
-      });
-
-      // The AuthContext will catch this and sync the new user to MongoDB
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      await updateProfile(userCredential.user, { displayName: data.name });
       onNavigate("dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to create an account");
@@ -124,33 +140,35 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
 
                 {/* LOGIN TAB */}
                 <TabsContent value="login" className="animate-in fade-in-50 duration-500">
-                  <form onSubmit={handleLogin} className="space-y-4">
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-sm font-semibold text-zinc-700">Email address</Label>
+                      <Label htmlFor="login-email" className="text-sm font-semibold text-zinc-700">Email address</Label>
                       <Input
-                        id="email"
+                        id="login-email"
                         type="email"
                         placeholder="ahmed@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
+                        {...loginForm.register("email")}
+                        className={`h-11 bg-zinc-50 focus-visible:ring-primary transition-all ${loginForm.formState.errors.email ? "border-red-500" : "border-zinc-200"}`}
                       />
+                      {loginForm.formState.errors.email && (
+                        <p className="text-red-500 text-xs font-medium">{loginForm.formState.errors.email.message}</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="password" className="text-sm font-semibold text-zinc-700">Password</Label>
+                        <Label htmlFor="login-password" className="text-sm font-semibold text-zinc-700">Password</Label>
                         <a href="#" className="text-xs text-primary hover:underline font-medium">Forgot password?</a>
                       </div>
                       <Input
-                        id="password"
+                        id="login-password"
                         type="password"
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
+                        {...loginForm.register("password")}
+                        className={`h-11 bg-zinc-50 focus-visible:ring-primary transition-all ${loginForm.formState.errors.password ? "border-red-500" : "border-zinc-200"}`}
                       />
+                      {loginForm.formState.errors.password && (
+                        <p className="text-red-500 text-xs font-medium">{loginForm.formState.errors.password.message}</p>
+                      )}
                     </div>
                     <Button type="submit" className="w-full h-11 mt-6 text-base font-semibold shadow-md active:scale-[0.98] transition-all" disabled={loading}>
                       {loading ? "Signing in..." : "Sign In to LahoreLens"}
@@ -160,18 +178,19 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
 
                 {/* SIGNUP TAB */}
                 <TabsContent value="signup" className="animate-in fade-in-50 duration-500">
-                  <form onSubmit={handleSignup} className="space-y-4">
+                  <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="signup-name" className="text-sm font-semibold text-zinc-700">Full Name</Label>
                       <Input
                         id="signup-name"
                         type="text"
                         placeholder="Ahmed Khan"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary transition-all"
+                        {...signupForm.register("name")}
+                        className={`h-11 bg-zinc-50 focus-visible:ring-primary transition-all ${signupForm.formState.errors.name ? "border-red-500" : "border-zinc-200"}`}
                       />
+                      {signupForm.formState.errors.name && (
+                        <p className="text-red-500 text-xs font-medium">{signupForm.formState.errors.name.message}</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="signup-email" className="text-sm font-semibold text-zinc-700">Email address</Label>
@@ -179,11 +198,12 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                         id="signup-email"
                         type="email"
                         placeholder="ahmed@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary transition-all"
+                        {...signupForm.register("email")}
+                        className={`h-11 bg-zinc-50 focus-visible:ring-primary transition-all ${signupForm.formState.errors.email ? "border-red-500" : "border-zinc-200"}`}
                       />
+                      {signupForm.formState.errors.email && (
+                        <p className="text-red-500 text-xs font-medium">{signupForm.formState.errors.email.message}</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="signup-password" className="text-sm font-semibold text-zinc-700">Password <span className="text-xs text-zinc-500 font-normal">(Min 6 chars)</span></Label>
@@ -191,12 +211,12 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                         id="signup-password"
                         type="password"
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        minLength={6}
-                        required
-                        className="h-11 bg-zinc-50 border-zinc-200 focus-visible:ring-primary transition-all"
+                        {...signupForm.register("password")}
+                        className={`h-11 bg-zinc-50 focus-visible:ring-primary transition-all ${signupForm.formState.errors.password ? "border-red-500" : "border-zinc-200"}`}
                       />
+                      {signupForm.formState.errors.password && (
+                        <p className="text-red-500 text-xs font-medium">{signupForm.formState.errors.password.message}</p>
+                      )}
                     </div>
                     <Button type="submit" className="w-full h-11 mt-6 text-base font-semibold shadow-md active:scale-[0.98] transition-all" disabled={loading}>
                        {loading ? "Creating Account..." : "Create Account"}

@@ -56,6 +56,7 @@ const upcomingEvents = [
 
 export function LandingPage({ onNavigate }: LandingPageProps) {
   return (
+
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
