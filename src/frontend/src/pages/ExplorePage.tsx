@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, SlidersHorizontal, Star, Heart, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, SlidersHorizontal, Star, Heart, MapPin, Loader2 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -14,82 +14,79 @@ import {
 import { Slider } from "../components/ui/slider";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../components/ui/sheet";
+import { auth } from "../config/firebase";
 
 interface ExplorePageProps {
   onNavigate: (page: string) => void;
 }
 
-const exploreItems = [
-  {
-    id: 1,
-    name: "Cooco's Den Restaurant",
-    category: "Food",
-    image: "https://images.unsplash.com/photo-1666190092689-e3968aa0c32c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxQYWtpc3RhbmklMjBmb29kJTIwYmlyeWFuaXxlbnwxfHx8fDE3NjAyODUyMzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.8,
-    price: "$$",
-    location: "Old City",
-    saved: false,
-  },
-  {
-    id: 2,
-    name: "Badshahi Mosque",
-    category: "Culture",
-    image: "https://images.unsplash.com/photo-1626303298621-984f671f8a82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxJc2xhbWljJTIwYXJjaGl0ZWN0dXJlJTIwbW9zcXVlfGVufDF8fHx8MTc2MDI4NTIzMnww&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.9,
-    price: "Free",
-    location: "Walled City",
-    saved: true,
-  },
-  {
-    id: 3,
-    name: "Basant Festival",
-    category: "Event",
-    image: "https://images.unsplash.com/photo-1663745425508-e37953bd9180?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMYWhvcmUlMjBQYWtpc3RhbiUyMGFyY2hpdGVjdHVyZXxlbnwxfHx8fDE3NjAyODUyMzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.7,
-    price: "$$",
-    location: "Minar-e-Pakistan",
-    saved: false,
-  },
-  {
-    id: 4,
-    name: "Butt Karahi",
-    category: "Food",
-    image: "https://images.unsplash.com/photo-1672477179695-7276b0602fa9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMFBha2lzdGFuaSUyMGN1aXNpbmV8ZW58MXx8fHwxNzYwMjg1MjMyfDA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.9,
-    price: "$",
-    location: "Lakshmi Chowk",
-    saved: false,
-  },
-  {
-    id: 5,
-    name: "Lahore Fort",
-    category: "Culture",
-    image: "https://images.unsplash.com/photo-1663745425508-e37953bd9180?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMYWhvcmUlMjBQYWtpc3RhbiUyMGFyY2hpdGVjdHVyZXxlbnwxfHx8fDE3NjAyODUyMzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.8,
-    price: "$",
-    location: "Walled City",
-    saved: true,
-  },
-  {
-    id: 6,
-    name: "Lahore Literary Festival",
-    category: "Event",
-    image: "https://images.unsplash.com/photo-1626303298621-984f671f8a82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxJc2xhbWljJTIwYXJjaGl0ZWN0dXJlJTIwbW9zcXVlfGVufDF8fHx8MTc2MDI4NTIzMnww&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.6,
-    price: "$$",
-    location: "Alhamra Arts",
-    saved: false,
-  },
-];
+interface Place {
+  _id: string;
+  name: string;
+  category: string;
+  image: string;
+  rating: number;
+  priceLevel: string;
+  location: string;
+  saved?: boolean;
+}
 
 export function ExplorePage({ onNavigate }: ExplorePageProps) {
-  const [items, setItems] = useState(exploreItems);
+  const [items, setItems] = useState<Place[]>([]);
   const [priceRange, setPriceRange] = useState([0]);
+  const [loading, setLoading] = useState(true);
 
-  const toggleSave = (id: number) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, saved: !item.saved } : item
-    ));
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/places/recommendations");
+        if (response.ok) {
+          const data = await response.json();
+          // Initialize saved state (if User is logged in, you'd ideally fetch favorites here too)
+          setItems(data.map((p: Place) => ({ ...p, saved: false })));
+        }
+      } catch (err) {
+        console.error("Failed to load exploration data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlaces();
+  }, []);
+
+  const toggleSave = async (id: string, currentlySaved: boolean) => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please login to save favorites!");
+      onNavigate("login");
+      return;
+    }
+
+    try {
+      const token = await user.getIdToken();
+      // Optimistic update
+      setItems(items.map((item) => 
+        item._id === id ? { ...item, saved: !item.saved } : item
+      ));
+
+      const response = await fetch(`http://localhost:5000/api/users/favorites${currentlySaved ? `/${id}` : ''}`, {
+        method: currentlySaved ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: currentlySaved ? null : JSON.stringify({ placeId: id })
+      });
+
+      if (!response.ok) {
+        // Revert update on failure
+        setItems(items.map((item) => 
+          item._id === id ? { ...item, saved: currentlySaved } : item
+        ));
+      }
+    } catch (err) {
+      console.error("Failed to toggle favorite", err);
+    }
   };
 
   const FilterSidebar = () => (
@@ -217,51 +214,61 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
               Showing {items.length} results
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {items.map((item) => (
-                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-video relative">
-                    <ImageWithFallback
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="absolute top-2 right-2"
-                      onClick={() => toggleSave(item.id)}
-                    >
-                      <Heart
-                        className={`h-4 w-4 ${
-                          item.saved ? "fill-red-500 text-red-500" : ""
-                        }`}
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : items.length === 0 ? (
+               <div className="text-center py-20 bg-card rounded-xl border">
+                  <h3>No places found.</h3>
+               </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {items.map((item) => (
+                  <Card key={item._id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="aspect-video relative">
+                      <ImageWithFallback
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
                       />
-                    </Button>
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="flex-1">{item.name}</h4>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute top-2 right-2 bg-white/90 hover:bg-white backdrop-blur-sm shadow-md"
+                        onClick={() => toggleSave(item._id, item.saved || false)}
+                      >
+                        <Heart
+                          className={`h-4 w-4 ${
+                            item.saved ? "fill-red-500 text-red-500" : "text-zinc-600"
+                          }`}
+                        />
+                      </Button>
                     </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary">{item.category}</Badge>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                        {item.rating}
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="flex-1 line-clamp-1">{item.name}</h4>
                       </div>
-                      <span className="text-sm text-muted-foreground">{item.price}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground mb-4">
-                      <MapPin className="h-3 w-3" />
-                      {item.location}
-                    </div>
-                    <Button variant="outline" className="w-full">
-                      View Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="secondary">{item.category}</Badge>
+                        <div className="flex items-center gap-1 text-sm font-medium">
+                          <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                          {item.rating || "4.8"}
+                        </div>
+                        <span className="text-sm text-zinc-500">{item.priceLevel || "$$"}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-zinc-500 mb-4">
+                        <MapPin className="h-3 w-3" />
+                        <span className="line-clamp-1">{item.location || "Lahore, Pakistan"}</span>
+                      </div>
+                      <Button variant="outline" className="w-full">
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
             <div className="flex justify-center gap-2 mt-8">
