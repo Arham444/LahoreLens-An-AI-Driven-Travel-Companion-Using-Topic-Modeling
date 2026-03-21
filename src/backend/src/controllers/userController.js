@@ -56,7 +56,24 @@ const removeFavorite = async (req, res) => {
     }
 };
 
+// @desc    Get user favorites
+// @route   GET /api/users/favorites
+// @access  Private
+const getFavorites = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).populate('favorites');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user.favorites);
+    } catch (error) {
+        console.error("Get Favorites Error:", error.message);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     addFavorite,
-    removeFavorite
+    removeFavorite,
+    getFavorites
 };
