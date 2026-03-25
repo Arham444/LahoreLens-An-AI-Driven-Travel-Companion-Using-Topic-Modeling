@@ -16,15 +16,15 @@ const syncUser = async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(token);
         const { uid, email, name } = decodedToken;
 
-        // 2. Check if user already exists in our MongoDB
-        let user = await User.findOne({ email });
+        // 2. Check if user already exists in our MongoDB via Firebase UID
+        let user = await User.findOne({ firebaseUid: uid });
 
         if (!user) {
-            // 3. If new user, create them in MongoDB
+            // 3. If new user, create them in MongoDB linked to their Firebase UID
             user = await User.create({
-                username: name || email.split('@')[0], // Fallback username if none provided
+                firebaseUid: uid,
+                username: name || email.split('@')[0],
                 email: email,
-                password: uid, // We no longer need local passwords, use UID as placeholder or remove password requirement from model
             });
             console.log("New user registered via Firebase:", email);
         } else {

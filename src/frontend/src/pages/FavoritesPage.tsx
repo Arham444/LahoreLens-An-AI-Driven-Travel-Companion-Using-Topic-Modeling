@@ -1,72 +1,82 @@
-import { useState } from "react";
-import { Heart, Trash2, Star, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart, Trash2, Star, MapPin, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { auth } from "../config/firebase";
+
+interface Place {
+  _id: string;
+  name: string;
+  category: string;
+  image: string;
+  rating: number;
+  location: string;
+}
 
 interface FavoritesPageProps {
   onNavigate: (page: string) => void;
 }
 
-const initialFavorites = [
-  {
-    id: 1,
-    name: "Badshahi Mosque",
-    category: "Culture",
-    image: "https://images.unsplash.com/photo-1626303298621-984f671f8a82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxJc2xhbWljJTIwYXJjaGl0ZWN0dXJlJTIwbW9zcXVlfGVufDF8fHx8MTc2MDI4NTIzMnww&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.9,
-    location: "Walled City",
-  },
-  {
-    id: 2,
-    name: "Cooco's Den",
-    category: "Food",
-    image: "https://images.unsplash.com/photo-1666190092689-e3968aa0c32c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxQYWtpc3RhbmklMjBmb29kJTIwYmlyeWFuaXxlbnwxfHx8fDE3NjAyODUyMzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.8,
-    location: "Old City",
-  },
-  {
-    id: 3,
-    name: "Lahore Fort",
-    category: "Culture",
-    image: "https://images.unsplash.com/photo-1663745425508-e37953bd9180?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMYWhvcmUlMjBQYWtpc3RhbiUyMGFyY2hpdGVjdHVyZXxlbnwxfHx8fDE3NjAyODUyMzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.7,
-    location: "Walled City",
-  },
-  {
-    id: 4,
-    name: "Basant Festival",
-    category: "Event",
-    image: "https://images.unsplash.com/photo-1672477179695-7276b0602fa9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMFBha2lzdGFuaSUyMGN1aXNpbmV8ZW58MXx8fHwxNzYwMjg1MjMyfDA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.6,
-    location: "Minar-e-Pakistan",
-  },
-  {
-    id: 5,
-    name: "Butt Karahi",
-    category: "Food",
-    image: "https://images.unsplash.com/photo-1666190092689-e3968aa0c32c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxQYWtpc3RhbmklMjBmb29kJTIwYmlyeWFuaXxlbnwxfHx8fDE3NjAyODUyMzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.9,
-    location: "Lakshmi Chowk",
-  },
-  {
-    id: 6,
-    name: "Art Exhibition",
-    category: "Event",
-    image: "https://images.unsplash.com/photo-1626303298621-984f671f8a82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxJc2xhbWljJTIwYXJjaGl0ZWN0dXJlJTIwbW9zcXVlfGVufDF8fHx8MTc2MDI4NTIzMnww&ixlib=rb-4.1.0&q=80&w=1080",
-    rating: 4.5,
-    location: "Alhamra Arts",
-  },
-];
-
 export function FavoritesPage({ onNavigate }: FavoritesPageProps) {
-  const [favorites, setFavorites] = useState(initialFavorites);
+  const [favorites, setFavorites] = useState<Place[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const removeFavorite = (id: number) => {
-    setFavorites(favorites.filter((item) => item.id !== id));
+  const fetchFavorites = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setError("You must be logged in to view favorites.");
+        setLoading(false);
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const response = await fetch("http://localhost:5000/api/users/favorites", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch favorites");
+
+      const data = await response.json();
+      setFavorites(data || []);
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to load your favorite locations.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFavorites();
+  }, []);
+
+  const removeFavorite = async (placeId: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const token = await user.getIdToken();
+      const response = await fetch(`http://localhost:5000/api/users/favorites/${placeId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setFavorites((prev) => prev.filter((place) => place._id !== placeId));
+      }
+    } catch (err) {
+      console.error("Failed to remove favorite", err);
+    }
   };
 
   const filteredFavorites =
@@ -88,7 +98,17 @@ export function FavoritesPage({ onNavigate }: FavoritesPageProps) {
           </p>
         </div>
 
-        {favorites.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-24">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <Card className="p-12 text-center border-red-200 bg-red-50/50">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+            <h3 className="mb-2 text-red-700">Oops!</h3>
+            <p className="text-red-600 mb-6">{error}</p>
+          </Card>
+        ) : favorites.length === 0 ? (
           <Card className="p-12 text-center">
             <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <h3 className="mb-2">No favorites yet</h3>
@@ -106,21 +126,21 @@ export function FavoritesPage({ onNavigate }: FavoritesPageProps) {
               <TabsList>
                 <TabsTrigger value="all">All ({favorites.length})</TabsTrigger>
                 <TabsTrigger value="food">
-                  Food ({favorites.filter((f) => f.category === "Food").length})
+                  Food ({favorites.filter((f: Place) => f.category === "Food").length})
                 </TabsTrigger>
                 <TabsTrigger value="event">
-                  Events ({favorites.filter((f) => f.category === "Event").length})
+                  Events ({favorites.filter((f: Place) => f.category === "Event").length})
                 </TabsTrigger>
                 <TabsTrigger value="culture">
-                  Culture ({favorites.filter((f) => f.category === "Culture").length})
+                  Culture ({favorites.filter((f: Place) => f.category === "Culture").length})
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
             {/* Favorites Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFavorites.map((item) => (
-                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              {filteredFavorites.map((item: Place) => (
+                <Card key={item._id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="aspect-video relative">
                     <ImageWithFallback
                       src={item.image}
@@ -130,18 +150,18 @@ export function FavoritesPage({ onNavigate }: FavoritesPageProps) {
                   </div>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="flex-1">{item.name}</h4>
+                       <h4 className="flex-1 line-clamp-1">{item.name}</h4>
                     </div>
                     <div className="flex items-center gap-2 mb-3">
                       <Badge variant="secondary">{item.category}</Badge>
                       <div className="flex items-center gap-1 text-sm">
                         <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                        {item.rating}
+                        {item.rating || "4.8"}
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mb-4">
                       <MapPin className="h-3 w-3" />
-                      {item.location}
+                      <span className="line-clamp-1">{item.location || "Lahore, Pakistan"}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" className="flex-1">
@@ -150,8 +170,8 @@ export function FavoritesPage({ onNavigate }: FavoritesPageProps) {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => removeFavorite(item.id)}
-                        className="text-destructive hover:text-destructive"
+                        onClick={() => removeFavorite(item._id)}
+                        className="text-destructive hover:text-destructive hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
