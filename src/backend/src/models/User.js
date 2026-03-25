@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
+    firebaseUid: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     username: {
         type: String,
         required: true,
@@ -9,10 +14,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-    },
-    password: {
-        type: String,
-        required: false, // Handled by Firebase
     },
     searchHistory: [{
         type: String,

@@ -12,9 +12,8 @@ const protect = async (req, res, next) => {
             // Verify Firebase token
             const decodedToken = await admin.auth().verifyIdToken(token);
 
-            // Get user from our database using the Firebase UID or email
-            // We use email as the primary link between Firebase and our MongoDB
-            req.user = await User.findOne({ email: decodedToken.email }).select('-password');
+            // Get user from our database using the Firebase UID
+            req.user = await User.findOne({ firebaseUid: decodedToken.uid }).select('-password');
 
             if (!req.user) {
                 // If user exists in Firebase but not in our DB, we can optionally create them here
