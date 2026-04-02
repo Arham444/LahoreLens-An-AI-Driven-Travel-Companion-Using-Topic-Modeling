@@ -1,4 +1,4 @@
-﻿# Node.js
+# Node.js
 node_modules/
 npm-debug.log
 yarn-error.log
@@ -21,4 +21,12 @@ Thumbs.db
 .idea/
 firebaseServiceAccount.json
 src/backend/config/firebaseServiceAccount.json
+
+# Large ML model files (use Git LFS or external storage)
+*.safetensors
+*.h5
+*.pkl
+*.pt
+*.bin
+!*.js.bin
 
