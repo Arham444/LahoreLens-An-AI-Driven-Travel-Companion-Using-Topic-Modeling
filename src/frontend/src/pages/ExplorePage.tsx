@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Search, SlidersHorizontal, Star, Heart, MapPin, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search, SlidersHorizontal, Heart, MapPin, Loader2, ThumbsUp, ThumbsDown, Minus, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -11,10 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { Slider } from "../components/ui/slider";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../components/ui/sheet";
 import { auth } from "../config/firebase";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 interface ExplorePageProps {
   onNavigate: (page: string) => void;
@@ -24,35 +25,112 @@ interface Place {
   _id: string;
   name: string;
   category: string;
-  image: string;
-  rating: number;
-  priceLevel: string;
-  location: string;
+  description: string;
+  comment: string;
+  mood: string;
+  topicName: string;
+  source: string;
+  sourceUrl: string;
+  originalUser: string;
+  sentimentScore: number;
   saved?: boolean;
 }
 
+interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+const MoodIcon = ({ mood }: { mood: string }) => {
+  if (mood === "Positive") return <ThumbsUp className="h-3 w-3" />;
+  if (mood === "Negative") return <ThumbsDown className="h-3 w-3" />;
+  return <Minus className="h-3 w-3" />;
+};
+
+const moodBadgeStyle = (mood: string) => {
+  if (mood === "Positive") return "bg-green-50 text-green-700 border-green-200";
+  if (mood === "Negative") return "bg-red-50 text-red-700 border-red-200";
+  return "bg-gray-50 text-gray-600 border-gray-200";
+};
+
+const topicBadgeStyle = (topic: string) => {
+  if (topic === "Food & Dining") return "bg-orange-50 text-orange-700 border-orange-200";
+  if (topic === "Social/Personal") return "bg-blue-50 text-blue-700 border-blue-200";
+  return "bg-purple-50 text-purple-700 border-purple-200";
+};
+
 export function ExplorePage({ onNavigate }: ExplorePageProps) {
   const [items, setItems] = useState<Place[]>([]);
-  const [priceRange, setPriceRange] = useState([0]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("all");
+  const [mood, setMood] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<Pagination>({ total: 0, page: 1, limit: 12, pages: 0 });
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/places/recommendations");
-        if (response.ok) {
-          const data = await response.json();
-          // Initialize saved state (if User is logged in, you'd ideally fetch favorites here too)
-          setItems(data.map((p: Place) => ({ ...p, saved: false })));
-        }
-      } catch (err) {
-        console.error("Failed to load exploration data", err);
-      } finally {
-        setLoading(false);
+  const fetchPlaces = useCallback(async (query: string, topicFilter: string, moodFilter: string, page: number) => {
+    setLoading(true);
+    try {
+      if (query.trim()) {
+        // Search mode
+        const params: Record<string, string> = { q: query };
+        if (topicFilter !== "all") params.topic = topicFilter;
+        if (moodFilter !== "all") params.mood = moodFilter;
+
+        const res = await axios.get(`${API_URL}/api/places/search`, { params });
+        setItems(res.data.map((p: Place) => ({ ...p, saved: false })));
+        setPagination({ total: res.data.length, page: 1, limit: res.data.length, pages: 1 });
+      } else {
+        // Browse mode with filters + pagination
+        const params: Record<string, string | number> = { limit: 12, page };
+        if (topicFilter !== "all") params.topic = topicFilter;
+        if (moodFilter !== "all") params.mood = moodFilter;
+
+        const res = await axios.get(`${API_URL}/api/places/recommendations`, { params });
+        setItems((res.data.data || []).map((p: Place) => ({ ...p, saved: false })));
+        setPagination(res.data.pagination || { total: 0, page: 1, limit: 12, pages: 0 });
       }
-    };
-    fetchPlaces();
+    } catch (err) {
+      console.error("Failed to load places:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchPlaces("", "all", "all", 1);
+  }, [fetchPlaces]);
+
+  // Debounced search
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchTimeout) clearTimeout(searchTimeout);
+    const timeout = setTimeout(() => {
+      fetchPlaces(value, category, mood, 1);
+    }, 400);
+    setSearchTimeout(timeout);
+  };
+
+  // Filter changes
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    fetchPlaces(searchQuery, value, mood, 1);
+  };
+
+  const handleMoodChange = (value: string) => {
+    setMood(value);
+    fetchPlaces(searchQuery, category, value, 1);
+  };
+
+  // Pagination
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= pagination.pages) {
+      fetchPlaces(searchQuery, category, mood, page);
+    }
+  };
 
   const toggleSave = async (id: string, currentlySaved: boolean) => {
     const user = auth.currentUser;
@@ -64,12 +142,11 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
 
     try {
       const token = await user.getIdToken();
-      // Optimistic update
-      setItems(items.map((item) => 
+      setItems(items.map((item) =>
         item._id === id ? { ...item, saved: !item.saved } : item
       ));
 
-      const response = await fetch(`http://localhost:5000/api/users/favorites${currentlySaved ? `/${id}` : ''}`, {
+      const response = await fetch(`${API_URL}/api/users/favorites${currentlySaved ? `/${id}` : ''}`, {
         method: currentlySaved ? "DELETE" : "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,8 +156,7 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
       });
 
       if (!response.ok) {
-        // Revert update on failure
-        setItems(items.map((item) => 
+        setItems(items.map((item) =>
           item._id === id ? { ...item, saved: currentlySaved } : item
         ));
       }
@@ -89,72 +165,49 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
     }
   };
 
+  const truncate = (text: string, len = 100) =>
+    text && text.length > len ? text.substring(0, len) + "..." : text;
+
   const FilterSidebar = () => (
     <div className="space-y-6">
       <div>
-        <h4 className="mb-3">Category</h4>
-        <Select>
+        <h4 className="mb-3 font-medium">Topic</h4>
+        <Select value={category} onValueChange={handleCategoryChange}>
           <SelectTrigger>
-            <SelectValue placeholder="All Categories" />
+            <SelectValue placeholder="All Topics" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="food">Food</SelectItem>
-            <SelectItem value="events">Events</SelectItem>
-            <SelectItem value="culture">Culture</SelectItem>
-            <SelectItem value="weather">Weather</SelectItem>
+            <SelectItem value="all">All Topics</SelectItem>
+            <SelectItem value="Food & Dining">Food & Dining</SelectItem>
+            <SelectItem value="Social/Personal">Social & Personal</SelectItem>
+            <SelectItem value="General/Lifestyle">General & Lifestyle</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div>
-        <h4 className="mb-3">Price</h4>
-        <Select>
+        <h4 className="mb-3 font-medium">Sentiment</h4>
+        <Select value={mood} onValueChange={handleMoodChange}>
           <SelectTrigger>
-            <SelectValue placeholder="Any Price" />
+            <SelectValue placeholder="All Sentiments" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Any Price</SelectItem>
-            <SelectItem value="free">Free</SelectItem>
-            <SelectItem value="budget">$ - Budget</SelectItem>
-            <SelectItem value="moderate">$$ - Moderate</SelectItem>
-            <SelectItem value="expensive">$$$ - Expensive</SelectItem>
+            <SelectItem value="all">All Sentiments</SelectItem>
+            <SelectItem value="Positive">👍 Positive</SelectItem>
+            <SelectItem value="Negative">👎 Negative</SelectItem>
+            <SelectItem value="Neutral">➖ Neutral</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div>
-        <h4 className="mb-3">Location</h4>
-        <Select>
-          <SelectTrigger>
-            <SelectValue placeholder="All Locations" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            <SelectItem value="old-city">Old City</SelectItem>
-            <SelectItem value="walled-city">Walled City</SelectItem>
-            <SelectItem value="gulberg">Gulberg</SelectItem>
-            <SelectItem value="dha">DHA</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <h4 className="mb-3">Rating</h4>
-        <Slider
-          value={priceRange}
-          onValueChange={setPriceRange}
-          max={5}
-          step={0.1}
-          className="mt-2"
-        />
-        <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-          <span>0</span>
-          <span>5.0</span>
-        </div>
-      </div>
-
-      <Button className="w-full">Apply Filters</Button>
+      <Button className="w-full" onClick={() => {
+        setCategory("all");
+        setMood("all");
+        setSearchQuery("");
+        fetchPlaces("", "all", "all", 1);
+      }}>
+        Reset Filters
+      </Button>
     </div>
   );
 
@@ -163,18 +216,33 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="mb-4">Explore Lahore</h1>
-          
+          <h1 className="mb-2">Explore Lahore</h1>
+          <p className="text-muted-foreground mb-4">
+            Search {pagination.total.toLocaleString()} AI-analyzed social media posts about Lahore
+          </p>
+
           {/* Search Bar */}
           <div className="flex gap-2">
             <div className="flex-1 flex items-center gap-2 px-4 border rounded-lg bg-card">
               <Search className="h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search places, events, food..."
+                placeholder="Search places, food, culture... (e.g. 'biryani', 'Badshahi Mosque')"
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => { setSearchQuery(""); fetchPlaces("", category, mood, 1); }}
+                >
+                  Clear
+                </Button>
+              )}
             </div>
-            
+
             {/* Mobile Filter Button */}
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
@@ -192,6 +260,29 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
               </SheetContent>
             </Sheet>
           </div>
+
+          {/* Active filters */}
+          {(category !== "all" || mood !== "all" || searchQuery) && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              <span className="text-sm text-muted-foreground">Active:</span>
+              {searchQuery && (
+                <Badge variant="secondary" className="text-xs">
+                  Search: "{searchQuery}"
+                </Badge>
+              )}
+              {category !== "all" && (
+                <Badge className={`text-xs ${topicBadgeStyle(category)}`}>
+                  {category}
+                </Badge>
+              )}
+              {mood !== "all" && (
+                <Badge className={`text-xs ${moodBadgeStyle(mood)}`}>
+                  <MoodIcon mood={mood} />
+                  <span className="ml-1">{mood}</span>
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-8">
@@ -211,7 +302,8 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
           {/* Main Content */}
           <div className="flex-1">
             <div className="mb-4 text-muted-foreground">
-              Showing {items.length} results
+              Showing {items.length} of {pagination.total.toLocaleString()} results
+              {searchQuery && <span className="font-medium"> for "{searchQuery}"</span>}
             </div>
 
             {loading ? (
@@ -219,51 +311,57 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : items.length === 0 ? (
-               <div className="text-center py-20 bg-card rounded-xl border">
-                  <h3>No places found.</h3>
-               </div>
+              <div className="text-center py-20 bg-card rounded-xl border">
+                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="mb-2">No results found</h3>
+                <p className="text-muted-foreground">Try a different search or adjust your filters</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {items.map((item) => (
                   <Card key={item._id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-video relative">
-                      <ImageWithFallback
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute top-2 right-2 bg-white/90 hover:bg-white backdrop-blur-sm shadow-md"
-                        onClick={() => toggleSave(item._id, item.saved || false)}
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${
-                            item.saved ? "fill-red-500 text-red-500" : "text-zinc-600"
-                          }`}
-                        />
-                      </Button>
-                    </div>
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="flex-1 line-clamp-1">{item.name}</h4>
-                      </div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Badge variant="secondary">{item.category}</Badge>
-                        <div className="flex items-center gap-1 text-sm font-medium">
-                          <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                          {item.rating || "4.8"}
+                      {/* Header: topic + mood badges + save */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge className={`text-xs ${topicBadgeStyle(item.topicName)}`}>
+                            {item.topicName}
+                          </Badge>
+                          <Badge className={`text-xs ${moodBadgeStyle(item.mood)}`}>
+                            <MoodIcon mood={item.mood} />
+                            <span className="ml-1">{item.mood}</span>
+                          </Badge>
                         </div>
-                        <span className="text-sm text-zinc-500">{item.priceLevel || "$$"}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => toggleSave(item._id, item.saved || false)}
+                        >
+                          <Heart className={`h-4 w-4 ${item.saved ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                        </Button>
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-zinc-500 mb-4">
-                        <MapPin className="h-3 w-3" />
-                        <span className="line-clamp-1">{item.location || "Lahore, Pakistan"}</span>
+
+                      {/* Title */}
+                      <h4 className="text-sm font-semibold mb-2 line-clamp-2 leading-snug">
+                        {truncate(item.name, 80)}
+                      </h4>
+
+                      {/* Comment preview */}
+                      <p className="text-xs text-muted-foreground mb-3 line-clamp-3 leading-relaxed">
+                        {truncate(item.comment || item.description, 150)}
+                      </p>
+
+                      {/* Footer: source + user */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{item.source || "Lahore"}</span>
+                        </div>
+                        {item.originalUser && (
+                          <span className="truncate max-w-[120px]">by {item.originalUser}</span>
+                        )}
                       </div>
-                      <Button variant="outline" className="w-full">
-                        View Details
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -271,16 +369,33 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
             )}
 
             {/* Pagination */}
-            <div className="flex justify-center gap-2 mt-8">
-              <Button variant="outline">Previous</Button>
-              <Button variant="outline">1</Button>
-              <Button>2</Button>
-              <Button variant="outline">3</Button>
-              <Button variant="outline">Next</Button>
-            </div>
+            {pagination.pages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pagination.page <= 1}
+                  onClick={() => goToPage(pagination.page - 1)}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground px-3">
+                  Page {pagination.page} of {pagination.pages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pagination.page >= pagination.pages}
+                  onClick={() => goToPage(pagination.page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
