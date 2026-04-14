@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import {
   Search, MapPin, Loader2, ThumbsUp, ThumbsDown, Minus, ArrowLeft,
-  Clock, Tag, MessageSquare, TrendingUp, ChevronRight, Sparkles
+  Clock, Tag, MessageSquare, TrendingUp, ChevronRight, Sparkles,
+  BookOpen, Star, Lightbulb, Navigation, AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -27,6 +28,19 @@ const LANDMARK_IMAGES: Record<string, string> = {
   "data-darbar": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/The_Shrine_of_Data_Ganj_Bakhsh%2C_Apr_2012.jpg/640px-The_Shrine_of_Data_Ganj_Bakhsh%2C_Apr_2012.jpg",
   "mall-road": "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80",
   "walled-city": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Walled_City_of_Lahore.jpg/640px-Walled_City_of_Lahore.jpg",
+  // New landmarks
+  "gurdwara-dera-sahib": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Dera_Sahib.jpg/640px-Dera_Sahib.jpg",
+  "lahore-museum": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Lahore_Museum.jpg/640px-Lahore_Museum.jpg",
+  "hazuri-bagh": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Hazuri_Bagh_Baradari.jpg/640px-Hazuri_Bagh_Baradari.jpg",
+  "tomb-of-jahangir": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Tomb_of_Jahangir_01.jpg/640px-Tomb_of_Jahangir_01.jpg",
+  "coocos-den": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80",
+  "gawalmandi": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80",
+  "lakshmi-chowk": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=600&q=80",
+  "packages-mall": "https://images.unsplash.com/photo-1519567241046-7f570f529a5e?w=600&q=80",
+  "jilani-park": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&q=80",
+  "jallo-park": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80",
+  "lahore-canal": "https://images.unsplash.com/photo-1504714146340-959ca07e1f38?w=600&q=80",
+  "fortress-stadium": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",
 };
 
 // Fallback handler for broken images
@@ -70,6 +84,17 @@ interface PlaceInsight {
   topicDistribution: { topic: string; count: number }[];
 }
 
+interface PlaceGuide {
+  placeId: string;
+  name: string;
+  history: string;
+  attractions: { name: string; description: string }[];
+  tips: string[];
+  bestTimeToVisit: string;
+  nearbyPlaces: string[];
+  generatedAt: string;
+}
+
 const MoodIcon = ({ mood }: { mood: string }) => {
   if (mood === "Positive") return <ThumbsUp className="h-4 w-4 text-green-600" />;
   if (mood === "Negative") return <ThumbsDown className="h-4 w-4 text-red-500" />;
@@ -92,6 +117,7 @@ const categoryColor = (cat: string) => {
     "Lifestyle": "bg-cyan-100 text-cyan-800",
     "Residential": "bg-teal-100 text-teal-800",
     "Religious": "bg-emerald-100 text-emerald-800",
+    "Parks": "bg-green-100 text-green-800",
   };
   return map[cat] || "bg-gray-100 text-gray-800";
 };
@@ -120,10 +146,13 @@ function SentimentBar({ positive, negative, neutral }: { positive: number; negat
 // =============================================
 function PlaceDetailView({ placeId, onBack }: { placeId: string; onBack: () => void }) {
   const [insight, setInsight] = useState<PlaceInsight | null>(null);
+  const [guide, setGuide] = useState<PlaceGuide | null>(null);
   const [loading, setLoading] = useState(true);
+  const [guideLoading, setGuideLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Fetch NLP insights
     const fetchInsights = async () => {
       setLoading(true);
       try {
@@ -131,12 +160,27 @@ function PlaceDetailView({ placeId, onBack }: { placeId: string; onBack: () => v
         setInsight(res.data);
       } catch (err: any) {
         console.error("Failed to fetch insights:", err);
-        setError(err.response?.data?.message || "Failed to load insights. Make sure the AI service is running.");
+        setError(err.response?.data?.message || "Failed to load insights.");
       } finally {
         setLoading(false);
       }
     };
+
+    // Fetch Gemini place guide (independent, non-blocking)
+    const fetchGuide = async () => {
+      setGuideLoading(true);
+      try {
+        const res = await axios.get(`${API_URL}/api/gemini/place/${placeId}`);
+        setGuide(res.data);
+      } catch (err) {
+        console.error("Gemini guide unavailable:", err);
+      } finally {
+        setGuideLoading(false);
+      }
+    };
+
     fetchInsights();
+    fetchGuide();
   }, [placeId]);
 
   if (loading) {
@@ -181,12 +225,112 @@ function PlaceDetailView({ placeId, onBack }: { placeId: string; onBack: () => v
         </div>
       </div>
 
-      {/* AI Summary */}
+      {/* ═══ GEMINI-GENERATED CONTENT ═══ */}
+      {guideLoading ? (
+        <Card className="border-dashed">
+          <CardContent className="py-8 flex flex-col items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Gemini is generating a detailed guide...</p>
+          </CardContent>
+        </Card>
+      ) : guide ? (
+        <>
+          {/* About / History */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="h-5 w-5 text-primary" /> About {insight.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{guide.history}</p>
+            </CardContent>
+          </Card>
+
+          {/* Key Attractions */}
+          {guide.attractions && guide.attractions.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Star className="h-5 w-5 text-amber-500" /> Key Attractions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {guide.attractions.map((a, i) => (
+                    <div key={i} className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                      <h4 className="font-semibold text-sm text-amber-900 mb-1">{a.name}</h4>
+                      <p className="text-xs text-amber-800/80 leading-relaxed">{a.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Best Time + Tips */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {guide.bestTimeToVisit && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-500" /> Best Time to Visit
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{guide.bestTimeToVisit}</p>
+                </CardContent>
+              </Card>
+            )}
+            {guide.nearbyPlaces && guide.nearbyPlaces.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Navigation className="h-4 w-4 text-indigo-500" /> Nearby Places
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {guide.nearbyPlaces.map((p, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">{p}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Visitor Tips */}
+          {guide.tips && guide.tips.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-yellow-500" /> Visitor Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {guide.tips.map((tip, i) => (
+                    <li key={i} className="text-sm flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span>
+                      <span className="text-muted-foreground">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : null}
+
+      {/* ═══ NLP MODEL INSIGHTS ═══ */}
+
+      {/* AI Summary from our trained model */}
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-primary" />
-            What Our AI Learned
+            What Our NLP Model Found
           </CardTitle>
         </CardHeader>
         <CardContent>

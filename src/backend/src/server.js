@@ -30,6 +30,7 @@ app.use('/api/places', require('./routes/placeRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/weather', require('./routes/weatherRoutes'));
 app.use('/api/analyze', require('./routes/analyzeRoutes'));
+app.use('/api/gemini', require('./routes/geminiRoutes'));
 
 const PORT = process.env.PORT || 5000;
 

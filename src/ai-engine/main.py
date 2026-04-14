@@ -44,6 +44,19 @@ LANDMARKS = [
     {"id": "data-darbar", "name": "Data Darbar", "keywords": ["data darbar", "data sahab"], "category": "Religious", "description": "The largest Sufi shrine in South Asia, a spiritual landmark of Lahore.", "visitDuration": "1-2 hours"},
     {"id": "mall-road", "name": "Mall Road", "keywords": ["mall road"], "category": "Historical", "description": "Historic boulevard with colonial-era buildings, museums, and landmarks.", "visitDuration": "2-3 hours"},
     {"id": "walled-city", "name": "Walled City of Lahore", "keywords": ["walled city", "androon lahore", "old lahore", "old city"], "category": "Historical", "description": "The ancient heart of Lahore with centuries of Mughal and Sikh heritage.", "visitDuration": "3-4 hours"},
+    # --- New landmarks ---
+    {"id": "gurdwara-dera-sahib", "name": "Gurdwara Dera Sahib", "keywords": ["gurdwara", "dera sahib", "sikh"], "category": "Religious", "description": "Historic Sikh gurdwara near Lahore Fort, a major pilgrimage site.", "visitDuration": "1 hour"},
+    {"id": "lahore-museum", "name": "Lahore Museum", "keywords": ["lahore museum", "museum"], "category": "Historical", "description": "One of Pakistan's finest museums, home to the famous Fasting Buddha statue.", "visitDuration": "2-3 hours"},
+    {"id": "hazuri-bagh", "name": "Hazuri Bagh", "keywords": ["hazuri bagh", "hazuri"], "category": "Historical", "description": "Beautiful Mughal garden situated between Badshahi Mosque and Lahore Fort.", "visitDuration": "1 hour"},
+    {"id": "tomb-of-jahangir", "name": "Tomb of Jahangir", "keywords": ["jahangir", "tomb of jahangir", "shahdara"], "category": "Historical", "description": "Mausoleum of Mughal Emperor Jahangir in Shahdara, built in 1637.", "visitDuration": "1-2 hours"},
+    {"id": "coocos-den", "name": "Coco's Den", "keywords": ["cooco", "coco's den", "coocos"], "category": "Cultural", "description": "Iconic rooftop restaurant and art gallery in the Walled City with views of Badshahi Mosque.", "visitDuration": "2-3 hours"},
+    {"id": "gawalmandi", "name": "Gawalmandi Food Street", "keywords": ["gawalmandi"], "category": "Food & Dining", "description": "Lahore's original food hub — famous for nihari, paya, and late-night BBQ.", "visitDuration": "2-3 hours"},
+    {"id": "lakshmi-chowk", "name": "Lakshmi Chowk", "keywords": ["lakshmi", "lakshmi chowk"], "category": "Food & Dining", "description": "Legendary night food spot known for BBQ, seekh kebabs, and street food culture.", "visitDuration": "1-2 hours"},
+    {"id": "packages-mall", "name": "Packages Mall", "keywords": ["packages mall", "packages"], "category": "Shopping", "description": "One of the largest malls in Pakistan with premium dining and entertainment.", "visitDuration": "3-4 hours"},
+    {"id": "jilani-park", "name": "Jilani Park (Racecourse Park)", "keywords": ["jilani park", "racecourse", "race course"], "category": "Parks", "description": "Largest public park in Lahore with gardens, food stalls, and family areas.", "visitDuration": "2-3 hours"},
+    {"id": "jallo-park", "name": "Jallo Park", "keywords": ["jallo"], "category": "Parks", "description": "Forest park with wildlife, boating lake, and swimming — popular weekend getaway.", "visitDuration": "Half day"},
+    {"id": "lahore-canal", "name": "Lahore Canal", "keywords": ["canal", "lahore canal"], "category": "Lifestyle", "description": "Iconic waterway dividing old and new Lahore, lined with jogging and cycling tracks.", "visitDuration": "1-2 hours"},
+    {"id": "fortress-stadium", "name": "Fortress Stadium", "keywords": ["fortress stadium", "fortress"], "category": "Shopping", "description": "Popular commercial and social hub with shopping plazas and restaurants.", "visitDuration": "2-3 hours"},
 ]
 
 logging.basicConfig(level=logging.INFO)
