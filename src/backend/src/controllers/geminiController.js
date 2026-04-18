@@ -93,7 +93,7 @@ const chatWithGemini = async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite-001' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const chat = model.startChat({
             history: [
                 { role: 'user', parts: [{ text: 'You are LahoreLens AI travel assistant. Acknowledge.' }] },
@@ -146,7 +146,7 @@ const getPlaceGuide = async (req, res) => {
 
         const prompt = PLACE_GUIDE_PROMPT(nlpData.name, nlpData.category, nlpData.description, nlpSummary);
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite-001' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
 
