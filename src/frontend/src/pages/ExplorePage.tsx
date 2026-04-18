@@ -1,285 +1,574 @@
 import { useState, useEffect } from "react";
-import { Search, SlidersHorizontal, Star, Heart, MapPin, Loader2 } from "lucide-react";
-import { Card, CardContent } from "../components/ui/card";
+import {
+  Search, MapPin, Loader2, ThumbsUp, ThumbsDown, Minus, ArrowLeft,
+  Clock, Tag, MessageSquare, TrendingUp, ChevronRight, Sparkles,
+  BookOpen, Star, Lightbulb, Navigation, AlertTriangle
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import { Slider } from "../components/ui/slider";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../components/ui/sheet";
-import { auth } from "../config/firebase";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// Images for famous Lahore landmarks (Wikimedia Commons + Unsplash fallbacks)
+const LANDMARK_IMAGES: Record<string, string> = {
+  "badshahi-mosque": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Badshahi_Mosque_Sunset.jpg/640px-Badshahi_Mosque_Sunset.jpg",
+  "lahore-fort": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Alamgiri_Gate%2C_Lahore_Fort.jpg/640px-Alamgiri_Gate%2C_Lahore_Fort.jpg",
+  "shalimar-gardens": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Shalimar_Garden_July_14_2005-Terrace_2_outer_southeastern_pavilion_with_red_sandstone_carved_inner_walls.jpg/640px-Shalimar_Garden_July_14_2005-Terrace_2_outer_southeastern_pavilion_with_red_sandstone_carved_inner_walls.jpg",
+  "minar-e-pakistan": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Minar-e-Pakistan_by_Usman_Ghani.jpg/640px-Minar-e-Pakistan_by_Usman_Ghani.jpg",
+  "food-street": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",
+  "anarkali": "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&q=80",
+  "heera-mandi": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Lahore_old_area.jpg/640px-Lahore_old_area.jpg",
+  "liberty-market": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80",
+  "gulberg": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80",
+  "dha": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80",
+  "johar-town": "https://images.unsplash.com/photo-1559827291-bac2cab37e8a?w=600&q=80",
+  "data-darbar": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/The_Shrine_of_Data_Ganj_Bakhsh%2C_Apr_2012.jpg/640px-The_Shrine_of_Data_Ganj_Bakhsh%2C_Apr_2012.jpg",
+  "mall-road": "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80",
+  "walled-city": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Walled_City_of_Lahore.jpg/640px-Walled_City_of_Lahore.jpg",
+  // New landmarks
+  "gurdwara-dera-sahib": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Dera_Sahib.jpg/640px-Dera_Sahib.jpg",
+  "lahore-museum": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Lahore_Museum.jpg/640px-Lahore_Museum.jpg",
+  "hazuri-bagh": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Hazuri_Bagh_Baradari.jpg/640px-Hazuri_Bagh_Baradari.jpg",
+  "tomb-of-jahangir": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Tomb_of_Jahangir_01.jpg/640px-Tomb_of_Jahangir_01.jpg",
+  "coocos-den": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80",
+  "gawalmandi": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80",
+  "lakshmi-chowk": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=600&q=80",
+  "packages-mall": "https://images.unsplash.com/photo-1519567241046-7f570f529a5e?w=600&q=80",
+  "jilani-park": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&q=80",
+  "jallo-park": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80",
+  "lahore-canal": "https://images.unsplash.com/photo-1504714146340-959ca07e1f38?w=600&q=80",
+  "fortress-stadium": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",
+};
+
+// Fallback handler for broken images
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const target = e.currentTarget;
+  target.style.display = "none";
+  if (target.parentElement) {
+    target.parentElement.style.background = "linear-gradient(135deg, #7c3a2e 0%, #c4956a 100%)";
+  }
+};
+
 
 interface ExplorePageProps {
   onNavigate: (page: string) => void;
 }
 
-interface Place {
-  _id: string;
+interface Landmark {
+  id: string;
   name: string;
   category: string;
-  image: string;
-  rating: number;
-  priceLevel: string;
-  location: string;
-  saved?: boolean;
+  description: string;
+  visitDuration: string;
+  mentionCount: number;
+  positivePercent: number;
+  dominantMood: string;
+  topTopic: string;
 }
 
-export function ExplorePage({ onNavigate }: ExplorePageProps) {
-  const [items, setItems] = useState<Place[]>([]);
-  const [priceRange, setPriceRange] = useState([0]);
+interface PlaceInsight {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  visitDuration: string;
+  mentionCount: number;
+  sentimentBreakdown: { Positive: number; Negative: number; Neutral: number };
+  aiSummary: string;
+  topKeywords: string[];
+  topPositiveComments: { text: string; mood: string; topicName: string }[];
+  topNegativeComments: { text: string; mood: string; topicName: string }[];
+  topicDistribution: { topic: string; count: number }[];
+}
+
+interface PlaceGuide {
+  placeId: string;
+  name: string;
+  history: string;
+  attractions: { name: string; description: string }[];
+  tips: string[];
+  bestTimeToVisit: string;
+  nearbyPlaces: string[];
+  generatedAt: string;
+}
+
+const MoodIcon = ({ mood }: { mood: string }) => {
+  if (mood === "Positive") return <ThumbsUp className="h-4 w-4 text-green-600" />;
+  if (mood === "Negative") return <ThumbsDown className="h-4 w-4 text-red-500" />;
+  return <Minus className="h-4 w-4 text-gray-400" />;
+};
+
+const moodColor = (mood: string) => {
+  if (mood === "Positive") return "bg-green-100 text-green-800 border-green-200";
+  if (mood === "Negative") return "bg-red-100 text-red-800 border-red-200";
+  return "bg-gray-100 text-gray-600 border-gray-200";
+};
+
+const categoryColor = (cat: string) => {
+  const map: Record<string, string> = {
+    "Historical": "bg-amber-100 text-amber-800",
+    "Monument": "bg-indigo-100 text-indigo-800",
+    "Food & Dining": "bg-orange-100 text-orange-800",
+    "Shopping": "bg-pink-100 text-pink-800",
+    "Cultural": "bg-purple-100 text-purple-800",
+    "Lifestyle": "bg-cyan-100 text-cyan-800",
+    "Residential": "bg-teal-100 text-teal-800",
+    "Religious": "bg-emerald-100 text-emerald-800",
+    "Parks": "bg-green-100 text-green-800",
+  };
+  return map[cat] || "bg-gray-100 text-gray-800";
+};
+
+// Sentiment bar component
+function SentimentBar({ positive, negative, neutral }: { positive: number; negative: number; neutral: number }) {
+  const total = positive + negative + neutral || 1;
+  return (
+    <div className="w-full">
+      <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
+        <div className="bg-green-500 transition-all" style={{ width: `${(positive / total) * 100}%` }} />
+        <div className="bg-yellow-400 transition-all" style={{ width: `${(neutral / total) * 100}%` }} />
+        <div className="bg-red-400 transition-all" style={{ width: `${(negative / total) * 100}%` }} />
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+        <span className="text-green-600">👍 {positive}</span>
+        <span className="text-yellow-600">➖ {neutral}</span>
+        <span className="text-red-500">👎 {negative}</span>
+      </div>
+    </div>
+  );
+}
+
+// =============================================
+// DETAIL VIEW — shown when user clicks a place
+// =============================================
+function PlaceDetailView({ placeId, onBack }: { placeId: string; onBack: () => void }) {
+  const [insight, setInsight] = useState<PlaceInsight | null>(null);
+  const [guide, setGuide] = useState<PlaceGuide | null>(null);
   const [loading, setLoading] = useState(true);
+  const [guideLoading, setGuideLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchPlaces = async () => {
+    // Fetch NLP insights
+    const fetchInsights = async () => {
+      setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/places/recommendations");
-        if (response.ok) {
-          const data = await response.json();
-          // Initialize saved state (if User is logged in, you'd ideally fetch favorites here too)
-          setItems(data.map((p: Place) => ({ ...p, saved: false })));
-        }
-      } catch (err) {
-        console.error("Failed to load exploration data", err);
+        const res = await axios.get(`${API_URL}/api/analyze/landmarks/${placeId}/insights`);
+        setInsight(res.data);
+      } catch (err: any) {
+        console.error("Failed to fetch insights:", err);
+        setError(err.response?.data?.message || "Failed to load insights.");
       } finally {
         setLoading(false);
       }
     };
-    fetchPlaces();
-  }, []);
 
-  const toggleSave = async (id: string, currentlySaved: boolean) => {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("Please login to save favorites!");
-      onNavigate("login");
-      return;
-    }
-
-    try {
-      const token = await user.getIdToken();
-      // Optimistic update
-      setItems(items.map((item) => 
-        item._id === id ? { ...item, saved: !item.saved } : item
-      ));
-
-      const response = await fetch(`http://localhost:5000/api/users/favorites${currentlySaved ? `/${id}` : ''}`, {
-        method: currentlySaved ? "DELETE" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: currentlySaved ? null : JSON.stringify({ placeId: id })
-      });
-
-      if (!response.ok) {
-        // Revert update on failure
-        setItems(items.map((item) => 
-          item._id === id ? { ...item, saved: currentlySaved } : item
-        ));
+    // Fetch Gemini place guide (independent, non-blocking)
+    const fetchGuide = async () => {
+      setGuideLoading(true);
+      try {
+        const res = await axios.get(`${API_URL}/api/gemini/place/${placeId}`);
+        setGuide(res.data);
+      } catch (err) {
+        console.error("Gemini guide unavailable:", err);
+      } finally {
+        setGuideLoading(false);
       }
-    } catch (err) {
-      console.error("Failed to toggle favorite", err);
-    }
-  };
+    };
 
-  const FilterSidebar = () => (
+    fetchInsights();
+    fetchGuide();
+  }, [placeId]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-muted-foreground">AI is analyzing comments about this place...</p>
+      </div>
+    );
+  }
+
+  if (error || !insight) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-red-500 mb-4">{error || "Could not load insights"}</p>
+        <Button onClick={onBack} variant="outline"><ArrowLeft className="h-4 w-4 mr-2" /> Go Back</Button>
+      </div>
+    );
+  }
+
+  const img = LANDMARK_IMAGES[insight.id] || "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=80";
+
+  return (
     <div className="space-y-6">
-      <div>
-        <h4 className="mb-3">Category</h4>
-        <Select>
-          <SelectTrigger>
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="food">Food</SelectItem>
-            <SelectItem value="events">Events</SelectItem>
-            <SelectItem value="culture">Culture</SelectItem>
-            <SelectItem value="weather">Weather</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Back button */}
+      <Button onClick={onBack} variant="ghost" className="mb-2">
+        <ArrowLeft className="h-4 w-4 mr-2" /> Back to Explore
+      </Button>
 
-      <div>
-        <h4 className="mb-3">Price</h4>
-        <Select>
-          <SelectTrigger>
-            <SelectValue placeholder="Any Price" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any Price</SelectItem>
-            <SelectItem value="free">Free</SelectItem>
-            <SelectItem value="budget">$ - Budget</SelectItem>
-            <SelectItem value="moderate">$$ - Moderate</SelectItem>
-            <SelectItem value="expensive">$$$ - Expensive</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <h4 className="mb-3">Location</h4>
-        <Select>
-          <SelectTrigger>
-            <SelectValue placeholder="All Locations" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            <SelectItem value="old-city">Old City</SelectItem>
-            <SelectItem value="walled-city">Walled City</SelectItem>
-            <SelectItem value="gulberg">Gulberg</SelectItem>
-            <SelectItem value="dha">DHA</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <h4 className="mb-3">Rating</h4>
-        <Slider
-          value={priceRange}
-          onValueChange={setPriceRange}
-          max={5}
-          step={0.1}
-          className="mt-2"
-        />
-        <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-          <span>0</span>
-          <span>5.0</span>
+      {/* Hero */}
+      <div className="relative rounded-2xl overflow-hidden h-64 md:h-80" style={{background: 'linear-gradient(135deg, #7c3a2e 0%, #c4956a 100%)'}}>
+        <img src={img} alt={insight.name} className="w-full h-full object-cover" onError={handleImageError} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+          <Badge className={`mb-2 ${categoryColor(insight.category)}`}>{insight.category}</Badge>
+          <h1 className="text-3xl font-bold mb-1">{insight.name}</h1>
+          <p className="text-white/80 text-sm">{insight.description}</p>
+          <div className="flex items-center gap-4 mt-3 text-sm text-white/70">
+            <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {insight.visitDuration}</span>
+            <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" /> {insight.mentionCount} mentions</span>
+          </div>
         </div>
       </div>
 
-      <Button className="w-full">Apply Filters</Button>
+      {/* ═══ GEMINI-GENERATED CONTENT ═══ */}
+      {guideLoading ? (
+        <Card className="border-dashed">
+          <CardContent className="py-8 flex flex-col items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Gemini is generating a detailed guide...</p>
+          </CardContent>
+        </Card>
+      ) : guide ? (
+        <>
+          {/* About / History */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="h-5 w-5 text-primary" /> About {insight.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{guide.history}</p>
+            </CardContent>
+          </Card>
+
+          {/* Key Attractions */}
+          {guide.attractions && guide.attractions.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Star className="h-5 w-5 text-amber-500" /> Key Attractions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {guide.attractions.map((a, i) => (
+                    <div key={i} className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                      <h4 className="font-semibold text-sm text-amber-900 mb-1">{a.name}</h4>
+                      <p className="text-xs text-amber-800/80 leading-relaxed">{a.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Best Time + Tips */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {guide.bestTimeToVisit && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-500" /> Best Time to Visit
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{guide.bestTimeToVisit}</p>
+                </CardContent>
+              </Card>
+            )}
+            {guide.nearbyPlaces && guide.nearbyPlaces.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Navigation className="h-4 w-4 text-indigo-500" /> Nearby Places
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {guide.nearbyPlaces.map((p, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">{p}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Visitor Tips */}
+          {guide.tips && guide.tips.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-yellow-500" /> Visitor Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {guide.tips.map((tip, i) => (
+                    <li key={i} className="text-sm flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span>
+                      <span className="text-muted-foreground">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : null}
+
+      {/* ═══ NLP MODEL INSIGHTS ═══ */}
+
+      {/* AI Summary from our trained model */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Sparkles className="h-5 w-5 text-primary" />
+            What Our NLP Model Found
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{
+              __html: insight.aiSummary
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Sentiment Breakdown */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Sentiment Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SentimentBar
+              positive={insight.sentimentBreakdown.Positive}
+              negative={insight.sentimentBreakdown.Negative}
+              neutral={insight.sentimentBreakdown.Neutral}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Topic Distribution */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Topic Distribution</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {insight.topicDistribution.map((t) => (
+              <div key={t.topic} className="flex items-center justify-between">
+                <span className="text-sm">{t.topic}</span>
+                <Badge variant="secondary" className="text-xs">{t.count}</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Keywords */}
+      {insight.topKeywords.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Tag className="h-4 w-4" /> Trending Keywords
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {insight.topKeywords.map((kw) => (
+                <Badge key={kw} variant="outline" className="text-sm px-3 py-1">{kw}</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Positive Comments */}
+      {insight.topPositiveComments.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <ThumbsUp className="h-4 w-4 text-green-600" /> What People Love
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {insight.topPositiveComments.map((c, i) => (
+              <div key={i} className="p-3 rounded-lg bg-green-50 border border-green-100">
+                <p className="text-sm text-green-900 leading-relaxed">"{c.text}"</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge className="text-xs bg-green-100 text-green-700">Positive</Badge>
+                  <span className="text-xs text-green-600">{c.topicName}</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Negative Comments */}
+      {insight.topNegativeComments.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <ThumbsDown className="h-4 w-4 text-red-500" /> Areas of Concern
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {insight.topNegativeComments.map((c, i) => (
+              <div key={i} className="p-3 rounded-lg bg-red-50 border border-red-100">
+                <p className="text-sm text-red-900 leading-relaxed">"{c.text}"</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge className="text-xs bg-red-100 text-red-700">Negative</Badge>
+                  <span className="text-xs text-red-600">{c.topicName}</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
+}
+
+// =============================================
+// MAIN EXPLORE PAGE — grid of landmarks
+// =============================================
+export function ExplorePage({ onNavigate }: ExplorePageProps) {
+  const [landmarks, setLandmarks] = useState<Landmark[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLandmarks = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/analyze/landmarks`);
+        setLandmarks(res.data);
+      } catch (err) {
+        console.error("Failed to fetch landmarks:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLandmarks();
+  }, []);
+
+  const filtered = landmarks.filter(
+    (lm) =>
+      lm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lm.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // If a place is selected, show its detail view
+  if (selectedPlace) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 md:px-6 py-8 max-w-4xl">
+          <PlaceDetailView placeId={selectedPlace} onBack={() => setSelectedPlace(null)} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="mb-4">Explore Lahore</h1>
-          
-          {/* Search Bar */}
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center gap-2 px-4 border rounded-lg bg-card">
-              <Search className="h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search places, events, food..."
-                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </div>
-            
-            {/* Mobile Filter Button */}
-            <Sheet>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="outline" size="icon">
-                  <SlidersHorizontal className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6">
-                  <FilterSidebar />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          <h1 className="text-3xl font-bold mb-2">Explore Lahore</h1>
+          <p className="text-muted-foreground">
+            Click on any landmark to see what our AI learned from thousands of social media posts
+          </p>
         </div>
 
-        <div className="flex gap-8">
-          {/* Desktop Sidebar */}
-          <aside className="hidden md:block w-64 flex-shrink-0">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <SlidersHorizontal className="h-5 w-5" />
-                  <h3>Filters</h3>
-                </div>
-                <FilterSidebar />
-              </CardContent>
-            </Card>
-          </aside>
+        {/* Search */}
+        <div className="flex items-center gap-2 px-4 border rounded-lg bg-card mb-8 max-w-xl">
+          <Search className="h-5 w-5 text-muted-foreground" />
+          <Input
+            placeholder="Search landmarks... (e.g. 'mosque', 'food')"
+            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-          {/* Main Content */}
-          <div className="flex-1">
-            <div className="mb-4 text-muted-foreground">
-              Showing {items.length} results
-            </div>
-
-            {loading ? (
-              <div className="flex justify-center items-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : items.length === 0 ? (
-               <div className="text-center py-20 bg-card rounded-xl border">
-                  <h3>No places found.</h3>
-               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {items.map((item) => (
-                  <Card key={item._id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-video relative">
-                      <ImageWithFallback
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute top-2 right-2 bg-white/90 hover:bg-white backdrop-blur-sm shadow-md"
-                        onClick={() => toggleSave(item._id, item.saved || false)}
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${
-                            item.saved ? "fill-red-500 text-red-500" : "text-zinc-600"
-                          }`}
-                        />
-                      </Button>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading landmarks...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20 bg-card rounded-xl border">
+            <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="mb-2">No landmarks found</h3>
+            <p className="text-muted-foreground">Try a different search term</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((lm) => {
+              const img = LANDMARK_IMAGES[lm.id] || "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80";
+              return (
+                <Card
+                  key={lm.id}
+                  className="overflow-hidden cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 group"
+                  onClick={() => setSelectedPlace(lm.id)}
+                >
+                  {/* Image */}
+                  <div className="aspect-[16/10] relative overflow-hidden" style={{background: 'linear-gradient(135deg, #7c3a2e 0%, #c4956a 100%)'}}>
+                    <img
+                      src={img}
+                      alt={lm.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={handleImageError}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <div className="absolute top-3 left-3">
+                      <Badge className={`text-xs ${categoryColor(lm.category)}`}>{lm.category}</Badge>
                     </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="flex-1 line-clamp-1">{item.name}</h4>
-                      </div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Badge variant="secondary">{item.category}</Badge>
-                        <div className="flex items-center gap-1 text-sm font-medium">
-                          <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                          {item.rating || "4.8"}
-                        </div>
-                        <span className="text-sm text-zinc-500">{item.priceLevel || "$$"}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-zinc-500 mb-4">
-                        <MapPin className="h-3 w-3" />
-                        <span className="line-clamp-1">{item.location || "Lahore, Pakistan"}</span>
-                      </div>
-                      <Button variant="outline" className="w-full">
-                        View Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h3 className="text-white font-bold text-lg leading-tight">{lm.name}</h3>
+                    </div>
+                  </div>
 
-            {/* Pagination */}
-            <div className="flex justify-center gap-2 mt-8">
-              <Button variant="outline">Previous</Button>
-              <Button variant="outline">1</Button>
-              <Button>2</Button>
-              <Button variant="outline">3</Button>
-              <Button variant="outline">Next</Button>
-            </div>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{lm.description}</p>
+
+                    {/* Stats row */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-1 text-sm">
+                        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">{lm.mentionCount}</span>
+                        <span className="text-muted-foreground">mentions</span>
+                      </div>
+                      <Badge className={`text-xs ${moodColor(lm.dominantMood)}`}>
+                        <MoodIcon mood={lm.dominantMood} />
+                        <span className="ml-1">{lm.positivePercent}% positive</span>
+                      </Badge>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="flex items-center justify-between text-sm text-primary font-medium">
+                      <span className="flex items-center gap-1">
+                        <Sparkles className="h-3.5 w-3.5" /> View AI Insights
+                      </span>
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
