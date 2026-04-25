@@ -13,7 +13,7 @@ interface LandingPageProps {
 const categories = [
   {
     icon: Utensils, title: "Food & Cuisine", description: "From nihari to biryani — taste the real Lahore",
-    image: "https://images.unsplash.com/photo-1631515243349-e0cb75fb8d4a?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80",
     count: "8 Places"
   },
   {
@@ -41,7 +41,7 @@ const topPlaces = [
   },
   {
     id: 2, name: "Food Street", rating: 4.8, type: "Dining",
-    image: "https://images.unsplash.com/photo-1631515243349-e0cb75fb8d4a?w=640&q=80",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=640&q=80",
     description: "Iconic rooftop dining with views of Badshahi Mosque",
   },
   {

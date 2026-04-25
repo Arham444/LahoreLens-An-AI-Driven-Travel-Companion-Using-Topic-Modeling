@@ -27,7 +27,7 @@ const LANDMARK_IMAGES: Record<string, string> = {
   "data-darbar": "https://images.unsplash.com/photo-1591018653367-6413aba63587?w=640&q=80",
   "lahore-museum": "https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=640&q=80",
   // Food & Dining
-  "food-street": "https://images.unsplash.com/photo-1631515243349-e0cb75fb8d4a?w=640&q=80",
+  "food-street": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=640&q=80",
   "coocos-den": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=640&q=80",
   "gawalmandi": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=640&q=80",
   "lakshmi-chowk": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=640&q=80",
