@@ -12,6 +12,26 @@ import { auth } from "../config/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import loginBg from "../assets/login-bg.png";
+import { AlertCircle } from "lucide-react";
+
+// Convert Firebase error codes to user-friendly messages
+const getFriendlyError = (error: any): string => {
+  const code = error?.code || "";
+  const map: Record<string, string> = {
+    "auth/invalid-email": "That email address doesn't look right. Please check and try again.",
+    "auth/user-disabled": "This account has been disabled. Please contact support.",
+    "auth/user-not-found": "We couldn't find an account with that email. Want to sign up instead?",
+    "auth/wrong-password": "Incorrect password. Please try again or reset your password.",
+    "auth/invalid-credential": "Incorrect email or password. Please double-check and try again.",
+    "auth/email-already-in-use": "An account with this email already exists. Try logging in instead.",
+    "auth/weak-password": "Your password is too weak. Please use at least 6 characters.",
+    "auth/too-many-requests": "Too many failed attempts. Please wait a moment and try again.",
+    "auth/network-request-failed": "Network error. Please check your internet connection.",
+    "auth/popup-closed-by-user": "Sign-in was cancelled. Please try again.",
+    "auth/operation-not-allowed": "This sign-in method is not enabled. Please contact support.",
+  };
+  return map[code] || "Something went wrong. Please try again.";
+};
 
 // Validation Schemas
 const loginSchema = z.object({
@@ -54,7 +74,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       onNavigate("dashboard");
     } catch (err: any) {
-      setError(err.message || "Failed to log in");
+      setError(getFriendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -69,7 +89,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       await updateProfile(userCredential.user, { displayName: data.name });
       onNavigate("dashboard");
     } catch (err: any) {
-      setError(err.message || "Failed to create an account");
+      setError(getFriendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -127,8 +147,12 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
           <div className="bg-white text-zinc-900 rounded-2xl border border-zinc-200 shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
             <div className="px-6 py-6 sm:px-8 sm:py-8">
               {error && (
-                <div className="p-3 mb-6 text-sm text-red-600 bg-red-100 border border-red-200 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                  <span className="font-semibold">Error:</span> {error}
+                <div className="p-3 mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-red-700 mb-0.5">Oops!</p>
+                    <p className="text-red-600/90">{error}</p>
+                  </div>
                 </div>
               )}
 

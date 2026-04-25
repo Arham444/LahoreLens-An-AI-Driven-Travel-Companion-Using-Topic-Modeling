@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Utensils, Calendar, MapPin, Cloud, Heart, MessageCircle, User, TrendingUp, ThumbsUp, ThumbsDown, Minus } from "lucide-react";
+import { Utensils, Calendar, MapPin, Cloud, Heart, MessageCircle, User, TrendingUp, ThumbsUp, ThumbsDown, Minus, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
@@ -84,15 +84,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     text && text.length > len ? text.substring(0, len) + "..." : text;
 
   const renderPlaceCard = (item: Place, index: number) => (
-    <div key={item._id || index} className="flex items-start justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
+    <div key={item._id || index} className="flex items-start justify-between p-4 border rounded-xl hover:shadow-md transition-all hover:border-primary/20 bg-white group cursor-pointer">
       <div className="flex-1 min-w-0">
-        <h4 className="mb-1 truncate">{truncate(item.name, 80)}</h4>
-        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+        <h4 className="mb-1 truncate font-semibold group-hover:text-primary transition-colors">{truncate(item.name, 80)}</h4>
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
           {truncate(item.comment || item.description)}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="secondary">{item.category}</Badge>
-          <Badge className={`text-xs ${moodColor(item.mood)}`}>
+          <Badge variant="secondary" className="rounded-md">{item.category}</Badge>
+          <Badge className={`text-xs rounded-md ${moodColor(item.mood)}`}>
             <MoodIcon mood={item.mood} />
             <span className="ml-1">{item.mood}</span>
           </Badge>
@@ -104,142 +104,159 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     </div>
   );
 
+  const totalPosts = stats ? stats.topics.reduce((a, t) => a + t.count, 0) : 0;
+  const positivePosts = stats?.moods.find((m) => m._id === "Positive")?.count || 0;
+  const foodMentions = stats?.topics.find((t) => t._id === "Food & Dining")?.count || 0;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-zinc-50">
       <div className="container mx-auto px-4 md:px-6 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="mb-2">Welcome back, {user?.username || "Guest"}!</h1>
-          <p className="text-muted-foreground">
-            Here are your personalized recommendations for exploring Lahore
-          </p>
+        {/* ═══ WELCOME HEADER ═══ */}
+        <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-primary to-blue-700 text-white shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold mb-1 text-white">Welcome back, {user?.username || "Explorer"}! 👋</h1>
+              <p className="text-white/70">
+                Here are your personalized recommendations powered by AI analysis
+              </p>
+            </div>
+            <Button onClick={() => onNavigate("explore")} variant="secondary" className="rounded-xl shadow-md w-fit">
+              <MapPin className="h-4 w-4 mr-2" /> Explore Landmarks
+            </Button>
+          </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* ═══ QUICK ACTIONS ═══ */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onNavigate("favorites")}>
-            <CardContent className="p-6 text-center">
-              <Heart className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p>Favorites</p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onNavigate("profile")}>
-            <CardContent className="p-6 text-center">
-              <User className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p>Profile</p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onNavigate("explore")}>
-            <CardContent className="p-6 text-center">
-              <MapPin className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p>Explore</p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <MessageCircle className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p>AI Chat</p>
-            </CardContent>
-          </Card>
+          {[
+            { icon: Heart, label: "Favorites", page: "favorites", color: "text-red-500" },
+            { icon: User, label: "Profile", page: "profile", color: "text-blue-500" },
+            { icon: MapPin, label: "Explore", page: "explore", color: "text-emerald-500" },
+            { icon: MessageCircle, label: "AI Chat", page: "", color: "text-purple-500" },
+          ].map((action) => (
+            <Card
+              key={action.label}
+              className="cursor-pointer group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 shadow-sm"
+              onClick={() => action.page && onNavigate(action.page)}
+            >
+              <CardContent className="p-5 text-center">
+                <action.icon className={`h-7 w-7 mx-auto mb-2 ${action.color} group-hover:scale-110 transition-transform`} />
+                <p className="font-medium text-sm">{action.label}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Stats Overview */}
+        {/* ═══ STATS OVERVIEW ═══ */}
         {stats && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <TrendingUp className="h-6 w-6 mx-auto mb-1 text-primary" />
-                <p className="text-2xl font-bold">
-                  {stats.topics.reduce((a, t) => a + t.count, 0).toLocaleString()}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-primary to-blue-500" />
+              <CardContent className="p-5 text-center">
+                <TrendingUp className="h-6 w-6 mx-auto mb-2 text-primary" />
+                <p className="text-3xl font-bold text-foreground">
+                  {totalPosts.toLocaleString()}
                 </p>
-                <p className="text-xs text-muted-foreground">Analyzed Posts</p>
+                <p className="text-xs text-muted-foreground mt-1">Analyzed Posts</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <ThumbsUp className="h-6 w-6 mx-auto mb-1 text-green-600" />
-                <p className="text-2xl font-bold">
-                  {stats.moods.find((m) => m._id === "Positive")?.count.toLocaleString() || 0}
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
+              <CardContent className="p-5 text-center">
+                <ThumbsUp className="h-6 w-6 mx-auto mb-2 text-green-600" />
+                <p className="text-3xl font-bold text-foreground">
+                  {positivePosts.toLocaleString()}
                 </p>
-                <p className="text-xs text-muted-foreground">Positive Reviews</p>
+                <p className="text-xs text-muted-foreground mt-1">Positive Reviews</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Utensils className="h-6 w-6 mx-auto mb-1 text-orange-500" />
-                <p className="text-2xl font-bold">
-                  {stats.topics.find((t) => t._id === "Food & Dining")?.count.toLocaleString() || 0}
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-orange-400 to-red-500" />
+              <CardContent className="p-5 text-center">
+                <Utensils className="h-6 w-6 mx-auto mb-2 text-orange-500" />
+                <p className="text-3xl font-bold text-foreground">
+                  {foodMentions.toLocaleString()}
                 </p>
-                <p className="text-xs text-muted-foreground">Food Mentions</p>
+                <p className="text-xs text-muted-foreground mt-1">Food Mentions</p>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Weather Widget */}
-        <Card className="mb-8">
+        {/* ═══ WEATHER ═══ */}
+        <Card className="mb-8 border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-blue-400 to-cyan-400" />
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <Cloud className="h-12 w-12 text-primary" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
+                  <Cloud className="h-7 w-7 text-white" />
+                </div>
                 <div>
-                  <h3>Today in Lahore</h3>
-                  <p className="text-muted-foreground">
+                  <h3 className="font-semibold text-lg">Today in Lahore</h3>
+                  <p className="text-muted-foreground text-sm">
                     {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                   </p>
                 </div>
               </div>
               <div className="text-center md:text-right">
-                <div className="text-4xl mb-1">28°C</div>
-                <p className="text-muted-foreground">Partly Cloudy</p>
+                <div className="text-4xl font-bold mb-0.5">28°C</div>
+                <p className="text-muted-foreground text-sm">Partly Cloudy</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Recommendations Tabs — Now powered by real NLP data */}
-        <Card>
-          <CardHeader>
-            <CardTitle>AI-Powered Recommendations</CardTitle>
+        {/* ═══ RECOMMENDATIONS ═══ */}
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-pink-500" />
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <CardTitle>AI-Powered Recommendations</CardTitle>
+            </div>
             <CardDescription>
-              Based on sentiment analysis of {stats ? stats.topics.reduce((a, t) => a + t.count, 0).toLocaleString() : "..."} social media posts
+              Based on sentiment analysis of {totalPosts.toLocaleString()} social media posts
             </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading recommendations...</div>
+              <div className="text-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+                <p className="text-muted-foreground">Loading recommendations...</p>
+              </div>
             ) : (
               <Tabs defaultValue="food" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="food">
+                <TabsList className="grid w-full grid-cols-3 bg-zinc-100 p-1 rounded-xl mb-4">
+                  <TabsTrigger value="food" className="rounded-lg data-[state=active]:shadow-sm">
                     <Utensils className="h-4 w-4 mr-2" />
                     Food
                   </TabsTrigger>
-                  <TabsTrigger value="lifestyle">
+                  <TabsTrigger value="lifestyle" className="rounded-lg data-[state=active]:shadow-sm">
                     <Calendar className="h-4 w-4 mr-2" />
                     Lifestyle
                   </TabsTrigger>
-                  <TabsTrigger value="social">
+                  <TabsTrigger value="social" className="rounded-lg data-[state=active]:shadow-sm">
                     <MapPin className="h-4 w-4 mr-2" />
                     Culture
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="food" className="space-y-4 mt-4">
+                <TabsContent value="food" className="space-y-3 mt-2">
                   {foodData.length > 0 ? foodData.map(renderPlaceCard) : (
-                    <p className="text-center text-muted-foreground py-6">No food recommendations yet</p>
+                    <p className="text-center text-muted-foreground py-8">No food recommendations yet</p>
                   )}
                 </TabsContent>
 
-                <TabsContent value="lifestyle" className="space-y-4 mt-4">
+                <TabsContent value="lifestyle" className="space-y-3 mt-2">
                   {lifestyleData.length > 0 ? lifestyleData.map(renderPlaceCard) : (
-                    <p className="text-center text-muted-foreground py-6">No lifestyle recommendations yet</p>
+                    <p className="text-center text-muted-foreground py-8">No lifestyle recommendations yet</p>
                   )}
                 </TabsContent>
 
-                <TabsContent value="social" className="space-y-4 mt-4">
+                <TabsContent value="social" className="space-y-3 mt-2">
                   {socialData.length > 0 ? socialData.map(renderPlaceCard) : (
-                    <p className="text-center text-muted-foreground py-6">No culture recommendations yet</p>
+                    <p className="text-center text-muted-foreground py-8">No culture recommendations yet</p>
                   )}
                 </TabsContent>
               </Tabs>
@@ -250,4 +267,3 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     </div>
   );
 }
-

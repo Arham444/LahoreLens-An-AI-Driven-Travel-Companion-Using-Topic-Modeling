@@ -18,24 +18,24 @@ const LANDMARK_IMAGES: Record<string, string> = {
   "lahore-fort": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Alamgiri_Gate%2C_Lahore_Fort.jpg/640px-Alamgiri_Gate%2C_Lahore_Fort.jpg",
   "shalimar-gardens": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Shalimar_Garden_July_14_2005-Terrace_2_outer_southeastern_pavilion_with_red_sandstone_carved_inner_walls.jpg/640px-Shalimar_Garden_July_14_2005-Terrace_2_outer_southeastern_pavilion_with_red_sandstone_carved_inner_walls.jpg",
   "minar-e-pakistan": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Minar-e-Pakistan_by_Usman_Ghani.jpg/640px-Minar-e-Pakistan_by_Usman_Ghani.jpg",
-  "food-street": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",
-  "anarkali": "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&q=80",
+  "food-street": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/FoodStreetLahore.jpg/640px-FoodStreetLahore.jpg",
+  "anarkali": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Anarkali_Bazaar_Lahore.jpg/640px-Anarkali_Bazaar_Lahore.jpg",
   "heera-mandi": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Lahore_old_area.jpg/640px-Lahore_old_area.jpg",
-  "liberty-market": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80",
-  "gulberg": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80",
+  "liberty-market": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Liberty_Roundabout%2C_Lahore.jpg/640px-Liberty_Roundabout%2C_Lahore.jpg",
+  "gulberg": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
   "dha": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80",
   "johar-town": "https://images.unsplash.com/photo-1559827291-bac2cab37e8a?w=600&q=80",
   "data-darbar": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/The_Shrine_of_Data_Ganj_Bakhsh%2C_Apr_2012.jpg/640px-The_Shrine_of_Data_Ganj_Bakhsh%2C_Apr_2012.jpg",
-  "mall-road": "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80",
+  "mall-road": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Lahore_GPO.jpg/640px-Lahore_GPO.jpg",
   "walled-city": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Walled_City_of_Lahore.jpg/640px-Walled_City_of_Lahore.jpg",
   // New landmarks
   "gurdwara-dera-sahib": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Dera_Sahib.jpg/640px-Dera_Sahib.jpg",
   "lahore-museum": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Lahore_Museum.jpg/640px-Lahore_Museum.jpg",
   "hazuri-bagh": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Hazuri_Bagh_Baradari.jpg/640px-Hazuri_Bagh_Baradari.jpg",
   "tomb-of-jahangir": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Tomb_of_Jahangir_01.jpg/640px-Tomb_of_Jahangir_01.jpg",
-  "coocos-den": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80",
+  "coocos-den": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80",
   "gawalmandi": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80",
-  "lakshmi-chowk": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=600&q=80",
+  "lakshmi-chowk": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80",
   "packages-mall": "https://images.unsplash.com/photo-1519567241046-7f570f529a5e?w=600&q=80",
   "jilani-park": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&q=80",
   "jallo-park": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80",
@@ -230,7 +230,7 @@ function PlaceDetailView({ placeId, onBack }: { placeId: string; onBack: () => v
         <Card className="border-dashed">
           <CardContent className="py-8 flex flex-col items-center gap-3">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Gemini is generating a detailed guide...</p>
+            <p className="text-sm text-muted-foreground">LahoreLens is generating your detailed guide...</p>
           </CardContent>
         </Card>
       ) : guide ? (
@@ -481,26 +481,29 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 md:px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Explore Lahore</h1>
-          <p className="text-muted-foreground">
+    <div className="min-h-screen bg-zinc-50">
+      {/* Header banner */}
+      <div className="bg-gradient-to-r from-primary to-blue-700 text-white py-10">
+        <div className="container mx-auto px-4 md:px-6">
+          <h1 className="text-3xl font-bold mb-2 text-white">Explore Lahore</h1>
+          <p className="text-white/70 mb-6">
             Click on any landmark to see what our AI learned from thousands of social media posts
           </p>
-        </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-2 px-4 border rounded-lg bg-card mb-8 max-w-xl">
-          <Search className="h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search landmarks... (e.g. 'mosque', 'food')"
-            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          {/* Search */}
+          <div className="flex items-center gap-2 px-4 border border-white/20 rounded-xl bg-white/10 backdrop-blur-md max-w-xl">
+            <Search className="h-5 w-5 text-white/60" />
+            <Input
+              placeholder="Search landmarks... (e.g. 'mosque', 'food')"
+              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white placeholder:text-white/50 bg-transparent"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-4 md:px-6 py-8">
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -520,7 +523,7 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
               return (
                 <Card
                   key={lm.id}
-                  className="overflow-hidden cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 group"
+                  className="overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group border-0 shadow-md"
                   onClick={() => setSelectedPlace(lm.id)}
                 >
                   {/* Image */}

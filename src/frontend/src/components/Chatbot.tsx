@@ -72,8 +72,14 @@ export function Chatbot() {
     } catch (err: any) {
       const errorText =
         err.response?.status === 503
-          ? "I'm currently offline. The AI service isn't available right now."
-          : "Sorry, I couldn't process that. Please try again!";
+          ? "I'm currently offline. The AI service isn't available right now. 😔"
+          : err.response?.status === 429
+          ? "I'm getting a lot of questions right now! Please wait a moment and try again. ⏳"
+          : err.response?.status === 401
+          ? "There's an issue with the AI configuration. Please contact the team."
+          : err.message?.includes("Network Error")
+          ? "Can't reach the server. Please check your internet connection. 🌐"
+          : "Sorry, I couldn't process that. Please try again! 🔄";
 
       setMessages((prev) => [
         ...prev,
