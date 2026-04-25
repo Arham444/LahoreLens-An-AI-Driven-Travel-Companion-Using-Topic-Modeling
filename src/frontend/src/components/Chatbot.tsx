@@ -190,7 +190,6 @@ export function Chatbot() {
             height: chatHeight,
             left: position.x,
             top: position.y,
-            cursor: isDragging ? "grabbing" : "default",
           }}
         >
           {/* Header — draggable */}
@@ -286,7 +285,7 @@ export function Chatbot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-xl bg-gradient-to-br from-primary to-primary/80 hover:shadow-2xl transition-all hover:scale-110 flex items-center justify-center group"
+          className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-2xl bg-gradient-to-br from-primary to-blue-600 hover:shadow-[0_0_24px_rgba(59,130,246,0.5)] transition-all hover:scale-110 flex items-center justify-center ring-4 ring-primary/20"
           aria-label="Open AI Chat"
         >
           <MessageCircle className="h-7 w-7 text-white" />
