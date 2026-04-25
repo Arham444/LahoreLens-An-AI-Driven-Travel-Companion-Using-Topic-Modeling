@@ -10,7 +10,7 @@ import { Button } from "../components/ui/button";
 import { MapPin } from "lucide-react";
 import { auth } from "../config/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+
 import loginBg from "../assets/login-bg.png";
 import { AlertCircle } from "lucide-react";
 
