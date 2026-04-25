@@ -20,7 +20,7 @@ const LANDMARK_IMAGES: Record<string, string> = {
   "shalimar-gardens": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=640&q=80",
   "minar-e-pakistan": "https://images.unsplash.com/photo-1587974928442-77dc3e0748b9?w=640&q=80",
   "heera-mandi": "https://images.unsplash.com/photo-1590577976322-3d2d6e2130d5?w=640&q=80",
-  "walled-city": "https://images.unsplash.com/photo-1565071559227-20ab25b7685e?w=640&q=80",
+  "walled-city": "https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?w=640&q=80",
   "gurdwara-dera-sahib": "https://images.unsplash.com/photo-1609947017136-9daf32a15c5c?w=640&q=80",
   "hazuri-bagh": "https://images.unsplash.com/photo-1548013146-72479768bada?w=640&q=80",
   "tomb-of-jahangir": "https://images.unsplash.com/photo-1564769625392-651b89c75b90?w=640&q=80",
