@@ -21,7 +21,7 @@ const topPlaces = [
   {
     id: 1,
     name: "Badshahi Mosque",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Badshahi_Mosque_Sunset.jpg/640px-Badshahi_Mosque_Sunset.jpg",
+    image: "https://images.unsplash.com/photo-1626303298621-984f671f8a82?w=640&q=80",
     rating: 4.9,
     type: "Historical",
     description: "Mughal-era masterpiece and one of the largest mosques in the world",
@@ -29,7 +29,7 @@ const topPlaces = [
   {
     id: 2,
     name: "Food Street",
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=640&q=80",
     rating: 4.8,
     type: "Dining",
     description: "Iconic rooftop dining with views of Badshahi Mosque",
@@ -37,7 +37,7 @@ const topPlaces = [
   {
     id: 3,
     name: "Lahore Fort",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Alamgiri_Gate%2C_Lahore_Fort.jpg/640px-Alamgiri_Gate%2C_Lahore_Fort.jpg",
+    image: "https://images.unsplash.com/photo-1663745425508-e37953bd9180?w=640&q=80",
     rating: 4.7,
     type: "Historical",
     description: "UNESCO World Heritage Site with Sheesh Mahal",
@@ -45,7 +45,7 @@ const topPlaces = [
   {
     id: 4,
     name: "Shalimar Gardens",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Shalimar_Garden_July_14_2005-Terrace_2_outer_southeastern_pavilion_with_red_sandstone_carved_inner_walls.jpg/640px-Shalimar_Garden_July_14_2005-Terrace_2_outer_southeastern_pavilion_with_red_sandstone_carved_inner_walls.jpg",
+    image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=640&q=80",
     rating: 4.6,
     type: "Heritage",
     description: "17th-century Mughal gardens with terraced levels and fountains",
@@ -69,9 +69,9 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
     <div className="min-h-screen">
       {/* ═══ HERO SECTION ═══ */}
       <section className="relative h-[650px] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0" style={{background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 40%, #1a202c 100%)'}}>
           <ImageWithFallback
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Badshahi_Mosque_Sunset.jpg/1280px-Badshahi_Mosque_Sunset.jpg"
+            src="https://images.unsplash.com/photo-1626303298621-984f671f8a82?w=1400&q=80"
             alt="Lahore"
             className="w-full h-full object-cover"
           />
