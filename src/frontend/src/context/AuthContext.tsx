@@ -42,6 +42,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
                 } catch (error) {
                     console.error("Failed to sync Firebase user with backend:", error);
+                    // Still set user from Firebase so chatbot & auth features work
+                    setUser({
+                        username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+                        email: firebaseUser.email,
+                        uid: firebaseUser.uid,
+                    });
                 }
             } else {
                 // User logged out

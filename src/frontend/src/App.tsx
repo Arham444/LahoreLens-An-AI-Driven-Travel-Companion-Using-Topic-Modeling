@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { Chatbot } from "./components/Chatbot";
@@ -24,19 +24,13 @@ type Page =
   | "settings"
   | "404";
 
-export default function App() {
+// Inner component that can access AuthContext (since it's wrapped by AuthProvider)
+function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>("home");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
   const handleNavigate = (page: string) => {
-    if (page === "dashboard" || page === "login") {
-      setIsLoggedIn(true);
-    }
-
-    if (page === "home" && currentPage === "login") {
-      setIsLoggedIn(false);
-    }
-
     setCurrentPage(page as Page);
     window.scrollTo(0, 0);
   };
@@ -69,24 +63,31 @@ export default function App() {
   const showNavAndFooter = currentPage !== "login";
 
   return (
+    <div className="min-h-screen flex flex-col">
+      {showNavAndFooter && (
+        <Navbar
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+          isLoggedIn={isLoggedIn}
+        />
+      )}
+
+      <main className="flex-1">
+        {renderPage()}
+      </main>
+
+      {showNavAndFooter && <Footer onNavigate={handleNavigate} />}
+
+      {isLoggedIn && <Chatbot />}
+    </div>
+  );
+}
+
+// Root component that provides AuthContext
+export default function App() {
+  return (
     <AuthProvider>
-      <div className="min-h-screen flex flex-col">
-        {showNavAndFooter && (
-          <Navbar
-            currentPage={currentPage}
-            onNavigate={handleNavigate}
-            isLoggedIn={isLoggedIn}
-          />
-        )}
-
-        <main className="flex-1">
-          {renderPage()}
-        </main>
-
-        {showNavAndFooter && <Footer onNavigate={handleNavigate} />}
-
-        {isLoggedIn && <Chatbot />}
-      </div>
+      <AppContent />
     </AuthProvider>
   );
 }
